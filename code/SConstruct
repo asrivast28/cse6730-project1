@@ -1,0 +1,55 @@
+import os
+import platform
+
+topDir = os.getcwd()
+cpp = None
+buildDir = None
+targetName = 'simulator'
+
+
+cppPaths = [
+            topDir,
+            ]
+
+cppFlags = [
+            ]
+
+cppLibs = [
+           ]
+
+cppDefs = [
+           ]
+
+libPaths = [
+            ]
+
+releaseBuild = ARGUMENTS.get('DEBUG', 0) in [0, '0']
+
+# For OS X
+if platform.system() == 'Darwin':
+  cpp = 'g++'
+  cppFlags.extend([
+              '-Wall',
+              '-std=c++0x',
+              ])
+  cppPaths.append('/opt/local/include')
+  if releaseBuild:
+      cppFlags.append('-O3')
+      cppDefs.append('NDEBUG')
+  else:
+      cppFlags.append('-g')
+
+if releaseBuild:
+    buildDir = 'release'
+else:
+    buildDir = 'debug'
+    targetName += '_debug'
+
+env = Environment(CXX = cpp, CXXFLAGS = cppFlags, CPPPATH = cppPaths, CPPDEFINES = cppDefs, LIBPATH = libPaths)
+
+env.targetName = targetName
+env.topDir = topDir
+
+buildDir = os.path.join('builds', buildDir)
+
+SConscript('SConscript', exports = 'env', variant_dir = buildDir, src_dir = '.', duplicate = 0)

@@ -1,0 +1,9 @@
+Import('env')
+
+srcFiles = [
+            'main.cpp',
+            ]
+
+env.Program(target = env.targetName, source = srcFiles)
+
+env.Install(env.topDir, env.targetName)
