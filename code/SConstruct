@@ -14,9 +14,6 @@ cppPaths = [
 cppFlags = [
             ]
 
-cppLibs = [
-           ]
-
 cppDefs = [
            ]
 
@@ -33,6 +30,7 @@ if platform.system() == 'Darwin':
               '-std=c++0x',
               ])
   cppPaths.append('/opt/local/include')
+  libPaths.append('/opt/local/lib')
   if releaseBuild:
       cppFlags.append('-O3')
       cppDefs.append('NDEBUG')
@@ -50,6 +48,6 @@ env = Environment(CXX = cpp, CXXFLAGS = cppFlags, CPPPATH = cppPaths, CPPDEFINES
 env.targetName = targetName
 env.topDir = topDir
 
-buildDir = os.path.join('builds', buildDir)
+buildDir = os.path.join('..', 'builds', buildDir)
 
 SConscript('SConscript', exports = 'env', variant_dir = buildDir, src_dir = '.', duplicate = 0)
