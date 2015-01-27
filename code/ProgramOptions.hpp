@@ -8,7 +8,7 @@
 namespace po = boost::program_options;
 
 /**
- * Utility class for parsing command line arguments.
+ * @brief  Utility class for parsing command line arguments. 
  */
 class ProgramOptions {
 public:
