@@ -22,20 +22,25 @@ libPaths = [
 
 releaseBuild = ARGUMENTS.get('DEBUG', 0) in [0, '0']
 
-# For OS X
-if platform.system() == 'Darwin':
+if platform.system() in ['Darwin', 'Linux']:
   cpp = 'g++'
   cppFlags.extend([
               '-Wall',
               '-std=c++0x',
               ])
-  cppPaths.append('/opt/local/include')
-  libPaths.append('/opt/local/lib')
   if releaseBuild:
       cppFlags.append('-O3')
       cppDefs.append('NDEBUG')
   else:
       cppFlags.append('-g')
+
+# For OS X
+if platform.system() == 'Darwin':
+  cppPaths.append('/opt/local/include')
+  libPaths.append('/opt/local/lib')
+elif platform.system() == 'Linux':
+  cppPaths.append('/usr/include')
+
 
 if releaseBuild:
     buildDir = 'release'

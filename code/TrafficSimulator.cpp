@@ -45,7 +45,7 @@ typedef struct {
   unsigned entryTime; // Time at which the vehicle entered the area of interest.
   unsigned exitTime; // Time at which the vehicle exited from the area of interest.
   double startWaiting; // Time at which the vehicle started waiting at the previous intersection.
-  double endWaiting; // Time at which the vehicle passed the previous intersection. 
+  double endWaiting; // Time at which the vehicle passed the previous intersection.
   double totalWaiting; // Total waiting time for the vehicle;
 	double currentPosition; // Indicate the current position of the vehicle.
 } Vehicle;
@@ -69,8 +69,8 @@ public:
     const bool = false
   );
 
-  const Vehicle*
-  vehicle() const;
+  Vehicle*
+  vehicle();
 
   bool
   continued() const;
@@ -91,9 +91,9 @@ EventData::EventData(
 {
 }
 
-const Vehicle*
+Vehicle*
 EventData::vehicle(
-) const
+)
 {
   return m_vehicle.get();
 }
@@ -106,13 +106,13 @@ EventData::continued(
 }
 
 /**
- * @brief Class containing simulation event attributes. 
+ * @brief Class containing simulation event attributes.
  */
 class Event {
 public:
   Event(
     const double,
-    void (*)(EventData*),
+    void (*)(EventData* const),
     EventData* const
   );
 
@@ -121,7 +121,7 @@ public:
 
   double
   timestamp() const;
-    
+
   friend
   bool
   operator<(
@@ -131,20 +131,21 @@ public:
 
 private:
 	double m_timestamp;					// event time stamp
-	void (*m_callback) (const EventData* const);		// handler callback
+	void (*m_callback) (EventData* const);		// handler callback
   std::unique_ptr<EventData> m_eventData;						// application data
 };
 
 Event::Event(
   const double timestamp,
-  void (*callback)(const EventData* const),
-  EventData* const eventData 
+  void (*callback)(EventData* const),
+  EventData* const eventData
 ) : m_timestamp(timestamp),
   m_callback(callback),
   m_eventData(eventData)
 {
 }
 
+double
 Event::timestamp(
 ) const
 {
@@ -178,7 +179,7 @@ void
 schedule(
   double timestamp,
   EventData* const eventData,
-  void (*callback) (const EventData* const)
+  void (*callback) (EventData* const)
 )
 {
   FEL.push(Event(timestamp, callback, eventData));
@@ -199,18 +200,25 @@ public:
     RED
   };
 
+  Intersection();
+
 public:
   void
   updateSignalStates();
 
   Intersection::SignalState
   getSignalState(
-    const Vehicle* const 
+    const Vehicle* const
   ) const;
 
 private:
-  SignalState[Street::Fifteenth] m_states;
+  std::vector<SignalState> m_states;
 }; // class IntersectionState
+
+Intersection::Intersection(
+) : m_states(static_cast<size_t>(Street::Fifteenth))
+{
+}
 
 void
 Intersection::updateSignalStates(
@@ -235,13 +243,17 @@ Intersection::getSignalState(
 
 Intersection intersection;
 
+void arrival(EventData* const);
+void entered(EventData* const);
+void departure(EventData* const);
+
 void
 arrival(
-  const EventData* const arrivalData 
+  EventData* const arrivalData
 )
 {
-  Vehicle* v = arrivalData->vehicle(); 
-  if (!arrivalData.continued()) {
+  Vehicle* v = arrivalData->vehicle();
+  if (!arrivalData->continued()) {
     v->entryTime = current_time();	 // set time vehicle start waiting (now)
     v->currentPosition = 10.0;
   }
@@ -252,7 +264,7 @@ arrival(
 	// Compute the time-stamp of the new arrival, and only schedule a new arrival
 	// if it is less than the maximum allowed time-stamp
 	//just for simplicity, assume the vehicle only coming from the beginning point
-  if (!arrivalData.continued()) {
+  if (!arrivalData->continued()) {
     // Compute the time stamp of the new arrival.
     double ts = current_time() + randexp(NB_INTER_ARRIVAL_TIME);
 
@@ -275,13 +287,13 @@ arrival(
 
   intersection.updateSignalStates();
   Intersection::SignalState signal = intersection.getSignalState(v);
-  // Get_current_Queque(v);                        
+  // Get_current_Queque(v);
 
-  if ((signal == GREEN_THRU) && (north_q.size() == 0)) {
+  if ((signal == Intersection::GREEN_THRU) && (north_q.size() == 0)) {
 
     // the vehicle will have "entered" the intersection in Cross time units
 		double ts = current_time() + INTERSECTION_CROSS_TIME;
-        
+
 		if (ts < SIMULATION_TIME) {
 
       v->endWaiting = current_time();     // vehicle stops waiting in the queue
@@ -303,13 +315,13 @@ arrival(
 
 void
 entered(
-  const EventData* const enteredData 
+  EventData* const enteredData
 )
 {
   intersection.updateSignalStates();
-  Intersection::SignalState signal = intersection.getSignalState(v);
-  // Get_current_Queque(v);                        
-  if ((signal == GREEN_THRU) && (north_q.size() == 0)) {
+  Intersection::SignalState signal = intersection.getSignalState(enteredData->vehicle());
+  // Get_current_Queque(v);
+  if ((signal == Intersection::GREEN_THRU) && (north_q.size() == 0)) {
     Vehicle* v = north_q.front();
     v->endWaiting = current_time();
     v->totalWaiting += (v->endWaiting - v->startWaiting);
@@ -333,7 +345,7 @@ entered(
 
 void
 departure(
-  const EventData* const departureData 
+  EventData* const departureData
 )
 {
 	//Decrease_Group_size(departure_data->eventParam.departure_event.vehicle);
@@ -342,7 +354,8 @@ departure(
     v->currentPosition += 1.0;
     double ts = current_time();
     if (ts < SIMULATION_TIME) {
-      EventData* newArrival = new EventData();
+      EventData* newArrival = new EventData(v, EventData::ARRIVAL);
+			schedule(ts, newArrival, arrival);
     }
   }
   else {
@@ -356,7 +369,7 @@ runSimulation(
 )
 {
   while (FEL.size() > 0) {
-    const Event& event = FEL.top(); 
+    const Event& event = FEL.top();
     simtime = event.timestamp();
     event.callback();
     FEL.pop();
@@ -364,12 +377,12 @@ runSimulation(
 }
 
 /**
- * @brief  Main function which is called to start the simulator.  
+ * @brief  Main function which is called to start the simulator.
  *
  * @param argc  Number of arguments passed to the simulator.
  * @param argv  Actual arguments passed to the simulator.
  *
- * @return Returns 0 if successful else returns a positive error code. 
+ * @return Returns 0 if successful else returns a positive error code.
  */
 int
 main(
@@ -388,7 +401,7 @@ main(
 
   // Seed the random number generator.
   srand((unsigned int)time(NULL));
-    
+
   // Create the first arrival on the queue and schedule it.
   EventData* newArrival = new EventData(new Vehicle(), EventData::ARRIVAL);
 
@@ -399,6 +412,6 @@ main(
 
   // Run the simulation.
   runSimulation();
-    
+
   return 0;
 }
