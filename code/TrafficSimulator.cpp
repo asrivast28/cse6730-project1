@@ -72,8 +72,13 @@ public:
   Vehicle*
   vehicle();
 
+  const Vehicle*
+  vehicle() const;
+
   bool
   continued() const;
+
+  ~EventData();
 
 private:
   std::unique_ptr<Vehicle> m_vehicle;
@@ -95,6 +100,13 @@ Vehicle*
 EventData::vehicle(
 )
 {
+  return m_vehicle.release();
+}
+
+const Vehicle*
+EventData::vehicle(
+) const
+{
   return m_vehicle.get();
 }
 
@@ -103,6 +115,11 @@ EventData::continued(
 ) const
 {
   return m_continued;
+}
+
+EventData::~EventData(
+)
+{
 }
 
 /**
@@ -116,11 +133,17 @@ public:
     EventData* const
   );
 
+  Event(
+    const Event&
+  );
+
   void
   callback() const;
 
   double
   timestamp() const;
+
+  ~Event();
 
   friend
   bool
@@ -132,7 +155,7 @@ public:
 private:
 	double m_timestamp;					// event time stamp
 	void (*m_callback) (EventData* const);		// handler callback
-  std::unique_ptr<EventData> m_eventData;						// application data
+  std::shared_ptr<EventData> m_eventData;						// application data
 };
 
 Event::Event(
@@ -142,6 +165,14 @@ Event::Event(
 ) : m_timestamp(timestamp),
   m_callback(callback),
   m_eventData(eventData)
+{
+}
+
+Event::Event(
+  const Event& event
+) : m_timestamp(event.m_timestamp),
+  m_callback(event.m_callback),
+  m_eventData(event.m_eventData)
 {
 }
 
@@ -159,6 +190,11 @@ Event::callback(
   m_callback(m_eventData.get());
 }
 
+Event::~Event(
+)
+{
+}
+
 bool
 operator<(
   const Event& e1,
@@ -171,7 +207,6 @@ operator<(
 
 double simtime = 0;
 std::priority_queue<Event> FEL;
-std::queue<Vehicle> STATS_nbCrossed;
 std::queue<Vehicle*> north_q;
 
 // schedule the event at time-stamp, and provide a callback to its handler
@@ -182,7 +217,7 @@ schedule(
   void (*callback) (EventData* const)
 )
 {
-  FEL.push(Event(timestamp, callback, eventData));
+  FEL.emplace(timestamp, callback, eventData);
 }
 
 // returns the current simulation time
@@ -299,7 +334,7 @@ arrival(
       v->endWaiting = current_time();     // vehicle stops waiting in the queue
       v->currentPosition += 1.0;
 			// create new Entered event to simulation the vehicle ENTERED the bridge
-			EventData *enteredIntersection = new EventData(v, EventData::ENTERED, true);
+			EventData* enteredIntersection = new EventData(v, EventData::ENTERED, true);
 
 			schedule(ts, enteredIntersection, entered);
       // update the group size of the intersection
@@ -319,9 +354,9 @@ entered(
 )
 {
   intersection.updateSignalStates();
-  Intersection::SignalState signal = intersection.getSignalState(enteredData->vehicle());
+  Intersection::SignalState signal = intersection.getSignalState(static_cast<const EventData* const>(enteredData)->vehicle());
   // Get_current_Queque(v);
-  if ((signal == Intersection::GREEN_THRU) && (north_q.size() == 0)) {
+  if ((signal == Intersection::GREEN_THRU) && (north_q.size() > 0)) {
     Vehicle* v = north_q.front();
     v->endWaiting = current_time();
     v->totalWaiting += (v->endWaiting - v->startWaiting);
@@ -330,14 +365,15 @@ entered(
 
     double ts = current_time() + INTERSECTION_CROSS_TIME;
     if (ts < SIMULATION_TIME) {
-			EventData *newEntered = new EventData(v, EventData::ENTERED, true);
+			EventData* newEntered = new EventData(v, EventData::ENTERED, true);
       schedule(ts, newEntered, entered);
 			// increment the size of the group of the intersection
 			//Increase_Group_size(v);
     }
     ts = current_time() + ROAD_TRAVEL_TIME;
     if (ts < SIMULATION_TIME) {
-			EventData *departureEvent =new EventData(enteredData->vehicle(), EventData::DEPARTURE);
+      Vehicle* ev = enteredData->vehicle();
+			EventData* departureEvent = new EventData(ev, EventData::DEPARTURE);
       schedule(ts, departureEvent, departure);
     }
   }
@@ -361,6 +397,7 @@ departure(
   else {
     v->exitTime = current_time();
     // Collect data from the vehicle.
+    delete v;
   }
 }
 
@@ -369,10 +406,10 @@ runSimulation(
 )
 {
   while (FEL.size() > 0) {
-    const Event& event = FEL.top();
+    const Event event(FEL.top());
+    FEL.pop();
     simtime = event.timestamp();
     event.callback();
-    FEL.pop();
   }
 }
 
