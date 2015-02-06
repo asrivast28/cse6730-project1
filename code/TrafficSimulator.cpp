@@ -119,8 +119,8 @@ class Event {
 public:
   Event(
     const double,
-    void (*)(EventData* const),
-    EventData* const
+    void (*)(const EventData&),
+    const EventData& 
   );
 
   Event(
@@ -144,14 +144,14 @@ public:
 
 private:
 	double m_timestamp;					// event time stamp
-	void (*m_callback) (EventData* const);		// handler callback
-  std::shared_ptr<EventData> m_eventData;						// application data
+	void (*m_callback) (const EventData&);		// handler callback
+  EventData m_eventData;						// application data
 };
 
 Event::Event(
   const double timestamp,
-  void (*callback)(EventData* const),
-  EventData* const eventData
+  void (*callback)(const EventData&),
+  const EventData& eventData
 ) : m_timestamp(timestamp),
   m_callback(callback),
   m_eventData(eventData)
@@ -177,7 +177,7 @@ void
 Event::callback(
 ) const
 {
-  m_callback(m_eventData.get());
+  m_callback(m_eventData);
 }
 
 Event::~Event(
@@ -203,8 +203,8 @@ std::queue<Vehicle> north_q;
 void
 schedule(
   double timestamp,
-  EventData* const eventData,
-  void (*callback) (EventData* const)
+  const EventData& eventData,
+  void (*callback) (const EventData&)
 )
 {
   FEL.emplace(timestamp, callback, eventData);
@@ -268,17 +268,17 @@ Intersection::getSignalState(
 
 Intersection intersection;
 
-void arrival(EventData* const);
-void entered(EventData* const);
-void departure(EventData* const);
+void arrival(const EventData&);
+void entered(const EventData&);
+void departure(const EventData&);
 
 void
 arrival(
-  EventData* const arrivalData
+  const EventData& arrivalData
 )
 {
-  Vehicle v(arrivalData->vehicle());
-  if (!arrivalData->continued()) {
+  Vehicle v(arrivalData.vehicle());
+  if (!arrivalData.continued()) {
     v.entryTime = current_time();	 // set time vehicle start waiting (now)
     v.currentPosition = 10.0;
   }
@@ -289,7 +289,7 @@ arrival(
 	// Compute the time-stamp of the new arrival, and only schedule a new arrival
 	// if it is less than the maximum allowed time-stamp
 	//just for simplicity, assume the vehicle only coming from the beginning point
-  if (!arrivalData->continued()) {
+  if (!arrivalData.continued()) {
     // Compute the time stamp of the new arrival.
     double ts = current_time() + randexp(NB_INTER_ARRIVAL_TIME);
 
@@ -301,7 +301,7 @@ arrival(
       Vehicle newVehicle;
       newVehicle.id = v.id + 1;
 
-      EventData* newArrival = new EventData(newVehicle, EventData::ARRIVAL);
+      EventData newArrival(newVehicle, EventData::ARRIVAL);
 
       schedule(ts, newArrival, arrival);
     }
@@ -324,7 +324,7 @@ arrival(
       v.endWaiting = current_time();     // vehicle stops waiting in the queue
       v.currentPosition += 1.0;
 			// create new Entered event to simulation the vehicle ENTERED the bridge
-			EventData* enteredIntersection = new EventData(v, EventData::ENTERED, true);
+			EventData enteredIntersection(v, EventData::ENTERED, true);
 
 			schedule(ts, enteredIntersection, entered);
       // update the group size of the intersection
@@ -340,11 +340,11 @@ arrival(
 
 void
 entered(
-  EventData* const enteredData
+  const EventData& enteredData
 )
 {
   intersection.updateSignalStates();
-  Intersection::SignalState signal = intersection.getSignalState(static_cast<const EventData* const>(enteredData)->vehicle());
+  Intersection::SignalState signal = intersection.getSignalState(enteredData.vehicle());
   // Get_current_Queque(v);
   if ((signal == Intersection::GREEN_THRU) && (north_q.size() > 0)) {
     Vehicle& v = north_q.front();
@@ -354,14 +354,14 @@ entered(
 
     double ts = current_time() + INTERSECTION_CROSS_TIME;
     if (ts < SIMULATION_TIME) {
-			EventData* newEntered = new EventData(v, EventData::ENTERED, true);
+			EventData newEntered(v, EventData::ENTERED, true);
       schedule(ts, newEntered, entered);
 			// increment the size of the group of the intersection
 			//Increase_Group_size(v);
     }
     ts = current_time() + ROAD_TRAVEL_TIME;
     if (ts < SIMULATION_TIME) {
-			EventData* departureEvent = new EventData(enteredData->vehicle(), EventData::DEPARTURE);
+			EventData departureEvent(enteredData.vehicle(), EventData::DEPARTURE);
       schedule(ts, departureEvent, departure);
     }
     north_q.pop();
@@ -370,16 +370,16 @@ entered(
 
 void
 departure(
-  EventData* const departureData
+  const EventData& departureData
 )
 {
 	//Decrease_Group_size(departure_data->eventParam.departure_event.vehicle);
-	Vehicle v(departureData->vehicle());
+	Vehicle v(departureData.vehicle());
   if (v.currentPosition != 11.0) {
     v.currentPosition += 1.0;
     double ts = current_time();
     if (ts < SIMULATION_TIME) {
-      EventData* newArrival = new EventData(v, EventData::ARRIVAL);
+      EventData newArrival(v, EventData::ARRIVAL);
 			schedule(ts, newArrival, arrival);
     }
   }
@@ -428,7 +428,7 @@ main(
   srand((unsigned int)time(NULL));
 
   // Create the first arrival on the queue and schedule it.
-  EventData* newArrival = new EventData(Vehicle(), EventData::ARRIVAL);
+  EventData newArrival(Vehicle(), EventData::ARRIVAL);
 
   // Set timestamp of the first arrival.
   double startTime = randexp(NB_INTER_ARRIVAL_TIME);
