@@ -1,5 +1,6 @@
 #include "Event.hpp"
 #include "ProgramOptions.hpp"
+#include "SimulationEngine.hpp"
 
 #include <cmath>
 #include <cstdlib>
@@ -12,6 +13,8 @@
 
 #define INTERSECTION_CROSS_TIME 1
 #define ROAD_TRAVEL_TIME 3
+
+SimulationEngine engine;
 
 /*
  * Generate a uniform random number in the range [0,1)
@@ -35,25 +38,7 @@ double randexp(double mean) {
 }
 
 
-double simtime = 0;
-std::priority_queue<Event> FEL;
 std::queue<Vehicle> northQueue;
-
-// schedule the event at time-stamp, and provide a callback to its handler
-void
-schedule(
-  double timestamp,
-  const EventData& eventData,
-  void (*callback) (const EventData&)
-)
-{
-  FEL.emplace(timestamp, callback, eventData);
-}
-
-// returns the current simulation time
-double currentTime() {
-	return simtime;
-}
 
 class Intersection {
 public:
@@ -89,7 +74,7 @@ void
 Intersection::updateSignalStates(
 )
 {
-	double timer = currentTime();
+	double timer = engine.currentTime();
 	int segement = timer / 10;
 	int residual = segement % 2;
   SignalState state = (residual == 0) ? GREEN_THRU : RED;
@@ -119,7 +104,7 @@ arrival(
 {
   Vehicle v(arrivalData.vehicle());
   if (!arrivalData.continued()) {
-    v.entryTime = currentTime();	 // set time vehicle start waiting (now)
+    v.entryTime = engine.currentTime();	 // set time vehicle start waiting (now)
     v.currentPosition = 10.0;
   }
   else {
@@ -131,7 +116,7 @@ arrival(
 	//just for simplicity, assume the vehicle only coming from the beginning point
   if (!arrivalData.continued()) {
     // Compute the time stamp of the new arrival.
-    double ts = currentTime() + randexp(NB_INTER_ARRIVAL_TIME);
+    double ts = engine.currentTime() + randexp(NB_INTER_ARRIVAL_TIME);
 
     // Schedule new arrival only if the computed time stamp is less than maximum.
     if (ts < SIMULATION_TIME) {
@@ -141,9 +126,9 @@ arrival(
       Vehicle newVehicle;
       newVehicle.id = v.id + 1;
 
-      EventData newArrival(newVehicle, EventData::ARRIVAL);
+      EventData newArrival(newVehicle);
 
-      schedule(ts, newArrival, arrival);
+      engine.schedule(ts, newArrival, Event::ARRIVAL);
     }
   }
 
@@ -157,23 +142,23 @@ arrival(
   if ((signal == Intersection::GREEN_THRU) && (northQueue.size() == 0)) {
 
     // the vehicle will have "entered" the intersection in Cross time units
-		double ts = currentTime() + INTERSECTION_CROSS_TIME;
+		double ts = engine.currentTime() + INTERSECTION_CROSS_TIME;
 
 		if (ts < SIMULATION_TIME) {
 
-      v.endWaiting = currentTime();     // vehicle stops waiting in the queue
+      v.endWaiting = engine.currentTime();     // vehicle stops waiting in the queue
       v.currentPosition += 1.0;
 			// create new Entered event to simulation the vehicle ENTERED the bridge
-			EventData enteredIntersection(v, EventData::ENTERED, true);
+			EventData enteredIntersection(v, true);
 
-			schedule(ts, enteredIntersection, entered);
+			engine.schedule(ts, enteredIntersection, Event::ENTERED);
       // update the group size of the intersection
       //Increase_Group_size(v);
 		}
 	}
 	// otherwise, the vehicle waits behind them.
 	else {
-    v.startWaiting = currentTime();
+    v.startWaiting = engine.currentTime();
     northQueue.push(v);
 	}
 }
@@ -188,21 +173,21 @@ entered(
   // Get_current_Queque(v);
   if ((signal == Intersection::GREEN_THRU) && (northQueue.size() > 0)) {
     Vehicle& v = northQueue.front();
-    v.endWaiting = currentTime();
+    v.endWaiting = engine.currentTime();
     v.totalWaiting += (v.endWaiting - v.startWaiting);
     v.currentPosition += 1.0;
 
-    double ts = currentTime() + INTERSECTION_CROSS_TIME;
+    double ts = engine.currentTime() + INTERSECTION_CROSS_TIME;
     if (ts < SIMULATION_TIME) {
-			EventData newEntered(v, EventData::ENTERED, true);
-      schedule(ts, newEntered, entered);
+			EventData newEntered(v, true);
+      engine.schedule(ts, newEntered, Event::ENTERED);
 			// increment the size of the group of the intersection
 			//Increase_Group_size(v);
     }
-    ts = currentTime() + ROAD_TRAVEL_TIME;
+    ts = engine.currentTime() + ROAD_TRAVEL_TIME;
     if (ts < SIMULATION_TIME) {
-			EventData departureEvent(enteredData.vehicle(), EventData::DEPARTURE);
-      schedule(ts, departureEvent, departure);
+			EventData departureEvent(enteredData.vehicle());
+      engine.schedule(ts, departureEvent, Event::DEPARTURE);
     }
     northQueue.pop();
   }
@@ -217,27 +202,15 @@ departure(
 	Vehicle v(departureData.vehicle());
   if (v.currentPosition != 11.0) {
     v.currentPosition += 1.0;
-    double ts = currentTime();
+    double ts = engine.currentTime();
     if (ts < SIMULATION_TIME) {
-      EventData newArrival(v, EventData::ARRIVAL);
-			schedule(ts, newArrival, arrival);
+      EventData newArrival(v);
+			engine.schedule(ts, newArrival, Event::ARRIVAL);
     }
   }
   else {
-    v.exitTime = currentTime();
+    v.exitTime = engine.currentTime();
     // Collect data from the vehicle.
-  }
-}
-
-void
-runSimulation(
-)
-{
-  while (FEL.size() > 0) {
-    const Event event(FEL.top());
-    FEL.pop();
-    simtime = event.timestamp();
-    event.callback();
   }
 }
 
@@ -268,15 +241,15 @@ main(
   srand((unsigned int)time(NULL));
 
   // Create the first arrival on the queue and schedule it.
-  EventData newArrival(Vehicle(), EventData::ARRIVAL);
+  EventData newArrival(Vehicle());
 
   // Set timestamp of the first arrival.
   double startTime = randexp(NB_INTER_ARRIVAL_TIME);
 
-  schedule(startTime, newArrival, arrival);
+  engine.schedule(startTime, newArrival, Event::ARRIVAL);
 
   // Run the simulation.
-  runSimulation();
+  engine.run();
 
   return 0;
 }

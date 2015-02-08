@@ -1,3 +1,6 @@
+#ifndef EVENT_HPP_
+#define EVENT_HPP_
+
 typedef enum { Tenth = 10, Eleventh, Twelfth, Thirteenth, Fourteenth, Fifteenth } Street;
 
 /**
@@ -20,17 +23,8 @@ typedef struct {
  */
 class EventData {
 public:
-  enum
-  EventType {
-    ARRIVAL,
-    ENTERED,
-    DEPARTURE
-  };
-
-public:
   EventData(
     const Vehicle&,
-    const EventType,
     const bool = false
   );
 
@@ -44,7 +38,6 @@ public:
 
 private:
   Vehicle m_vehicle;
-	EventType m_eventType;
   bool m_continued;
 };
 
@@ -52,6 +45,14 @@ private:
  * @brief Class containing simulation event attributes.
  */
 class Event {
+public:
+  enum
+  EventType {
+    ARRIVAL,
+    ENTERED,
+    DEPARTURE
+  };
+
 public:
   Event(
     const double,
@@ -83,3 +84,5 @@ private:
 	void (*m_callback) (const EventData&);		// handler callback
   EventData m_eventData;						// application data
 };
+
+#endif // EVENT_HPP_

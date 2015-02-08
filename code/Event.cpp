@@ -3,10 +3,8 @@
 
 EventData::EventData(
   const Vehicle& vehicle,
-  const EventType eventType,
   const bool continued
 ) : m_vehicle(vehicle),
-  m_eventType(eventType),
   m_continued(continued)
 {
 }
