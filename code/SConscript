@@ -12,7 +12,8 @@ if platform.system() == 'Darwin':
 srcFiles = [
             'ProgramOptions.cpp',
             'Event.cpp',
-            'TrafficSimulator.cpp',
+            'Simulation.cpp',
+            'TrafficEvent.cpp',
             ]
 
 env.Program(target = env.targetName, source = srcFiles, LIBS = cppLibs)

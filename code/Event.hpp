@@ -1,6 +1,8 @@
 #ifndef EVENT_HPP_
 #define EVENT_HPP_
 
+#include <memory>
+
 typedef enum { Tenth = 10, Eleventh, Twelfth, Thirteenth, Fourteenth, Fifteenth } Street;
 
 /**
@@ -19,70 +21,44 @@ typedef struct {
 } Vehicle;
 
 /**
- * @brief Class for storing event data.
- */
-class EventData {
-public:
-  EventData(
-    const Vehicle&,
-    const bool = false
-  );
-
-  const Vehicle&
-  vehicle() const;
-
-  bool
-  continued() const;
-
-  ~EventData();
-
-private:
-  Vehicle m_vehicle;
-  bool m_continued;
-};
-
-/**
  * @brief Class containing simulation event attributes.
  */
 class Event {
 public:
-  enum
-  EventType {
-    ARRIVAL,
-    ENTERED,
-    DEPARTURE
-  };
-
-public:
   Event(
-    const double,
-    void (*)(const EventData&),
-    const EventData& 
+    const double
   );
 
   Event(
     const Event&
   );
 
-  void
-  callback() const;
-
+  virtual
   double
   timestamp() const;
 
-  ~Event();
+  virtual
+  void
+  process() = 0;
 
-  friend
-  bool
-  operator<(
-    const Event&,
-    const Event&
-  );
+  virtual
+  ~Event();
 
 private:
 	double m_timestamp;					// event time stamp
-	void (*m_callback) (const EventData&);		// handler callback
-  EventData m_eventData;						// application data
+};
+
+class EventComparator {
+public:
+  bool
+  operator()(
+    const std::unique_ptr<Event>& e1,
+    const std::unique_ptr<Event>& e2
+  )
+  {
+    return (e1->timestamp() < e2->timestamp());
+  }
+
 };
 
 #endif // EVENT_HPP_
