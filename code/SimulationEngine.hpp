@@ -46,7 +46,6 @@ void
 SimulationEngine::schedule(
   double timestamp,
   const EventData& eventData,
-  EventType eventType,
   void (*callback) (const EventData&)
 )
 {

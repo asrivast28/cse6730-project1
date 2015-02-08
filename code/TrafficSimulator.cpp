@@ -128,7 +128,7 @@ arrival(
 
       EventData newArrival(newVehicle);
 
-      engine.schedule(ts, newArrival, Event::ARRIVAL);
+      engine.schedule(ts, newArrival, arrival);
     }
   }
 
@@ -151,7 +151,7 @@ arrival(
 			// create new Entered event to simulation the vehicle ENTERED the bridge
 			EventData enteredIntersection(v, true);
 
-			engine.schedule(ts, enteredIntersection, Event::ENTERED);
+			engine.schedule(ts, enteredIntersection, entered);
       // update the group size of the intersection
       //Increase_Group_size(v);
 		}
@@ -180,14 +180,14 @@ entered(
     double ts = engine.currentTime() + INTERSECTION_CROSS_TIME;
     if (ts < SIMULATION_TIME) {
 			EventData newEntered(v, true);
-      engine.schedule(ts, newEntered, Event::ENTERED);
+      engine.schedule(ts, newEntered, entered);
 			// increment the size of the group of the intersection
 			//Increase_Group_size(v);
     }
     ts = engine.currentTime() + ROAD_TRAVEL_TIME;
     if (ts < SIMULATION_TIME) {
 			EventData departureEvent(enteredData.vehicle());
-      engine.schedule(ts, departureEvent, Event::DEPARTURE);
+      engine.schedule(ts, departureEvent, departure);
     }
     northQueue.pop();
   }
@@ -205,7 +205,7 @@ departure(
     double ts = engine.currentTime();
     if (ts < SIMULATION_TIME) {
       EventData newArrival(v);
-			engine.schedule(ts, newArrival, Event::ARRIVAL);
+			engine.schedule(ts, newArrival, arrival);
     }
   }
   else {
@@ -240,13 +240,15 @@ main(
   // Seed the random number generator.
   srand((unsigned int)time(NULL));
 
+  Vehicle firstV;
+
   // Create the first arrival on the queue and schedule it.
-  EventData newArrival(Vehicle());
+  EventData newArrival(firstV);
 
   // Set timestamp of the first arrival.
   double startTime = randexp(NB_INTER_ARRIVAL_TIME);
 
-  engine.schedule(startTime, newArrival, Event::ARRIVAL);
+  engine.schedule(startTime, newArrival, arrival);
 
   // Run the simulation.
   engine.run();
