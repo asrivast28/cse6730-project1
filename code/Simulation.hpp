@@ -21,7 +21,7 @@ public:
   currentTime() const;
 
 private:
-  std::priority_queue<std::unique_ptr<Event>, std::vector<std::unique_ptr<Event> >, EventComparator> m_fel;
+  std::priority_queue<std::shared_ptr<Event>, std::vector<std::shared_ptr<Event> >, EventComparator> m_fel;
   double m_simtime;
 }; // class Simulation
 

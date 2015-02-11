@@ -52,8 +52,8 @@ class EventComparator {
 public:
   bool
   operator()(
-    const std::unique_ptr<Event>& e1,
-    const std::unique_ptr<Event>& e2
+    const std::shared_ptr<Event>& e1,
+    const std::shared_ptr<Event>& e2
   )
   {
     return (e1->timestamp() < e2->timestamp());

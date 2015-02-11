@@ -11,10 +11,10 @@ Simulation::run(
 )
 {
   while (m_fel.size() > 0) {
-    const std::unique_ptr<Event>& event = m_fel.top();
+    const std::shared_ptr<Event> event(m_fel.top());
+    m_fel.pop();
     m_simtime = event->timestamp();
     event->process();
-    m_fel.pop();
   }
 }
 
