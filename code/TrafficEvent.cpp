@@ -52,9 +52,7 @@ ArrivalEvent::process(
   Vehicle v(m_vehicle);
   if (!m_continued) {
     v.entryTime = simulation.currentTime();	 // set time vehicle start waiting (now)
-    v.currentPosition = 10.0;
-  }
-  else {
+    v.currentPosition = 10;
   }
 
 	//if it is the begining point, could schedule a new arrival event
@@ -81,10 +79,11 @@ ArrivalEvent::process(
   // enter the intersection,to schedule the entered event
 
   intersection.updateSignalStates(simulation.currentTime());
-  Intersection::SignalState signal = intersection.getSignalState(v);
+  Intersection::SignalState signal = intersection.signalState(v);
+  unsigned queueSize = intersection.queueSize(v);
   // Get_current_Queque(v);
 
-  if ((signal == Intersection::GREEN_THRU) && (northQueue.size() == 0)) {
+  if ((signal == Intersection::GREEN_THRU) && (queueSize == 0)) {
 
     // the vehicle will have "entered" the intersection in Cross time units
 		double ts = simulation.currentTime() + INTERSECTION_CROSS_TIME;
@@ -92,17 +91,17 @@ ArrivalEvent::process(
 		if (ts < SIMULATION_TIME) {
 
       v.endWaiting = simulation.currentTime();     // vehicle stops waiting in the queue
-      v.currentPosition += 1.0;
+      v.currentPosition += 1;
 			// create new Entered event to simulation the vehicle ENTERED the bridge
 			simulation.schedule(new EnteredEvent(ts, v, true));
       // update the group size of the intersection
-      //Increase_Group_size(v);
+      intersection.increaseGroupSize(v);
 		}
 	}
 	// otherwise, the vehicle waits behind them.
 	else {
     v.startWaiting = simulation.currentTime();
-    northQueue.push(v);
+    intersection.addToQueue(v);
 	}
 }
 
@@ -121,25 +120,24 @@ EnteredEvent::process(
 )
 {
   intersection.updateSignalStates(simulation.currentTime());
-  Intersection::SignalState signal = intersection.getSignalState(m_vehicle);
-  // Get_current_Queque(v);
-  if ((signal == Intersection::GREEN_THRU) && (northQueue.size() > 0)) {
-    Vehicle& v = northQueue.front();
+  Intersection::SignalState signal = intersection.signalState(m_vehicle);
+  unsigned queueSize = intersection.queueSize(m_vehicle);
+  if ((signal == Intersection::GREEN_THRU) && (queueSize > 0)) {
+    Vehicle v = intersection.frontVehicle(m_vehicle);
     v.endWaiting = simulation.currentTime();
     v.totalWaiting += (v.endWaiting - v.startWaiting);
-    v.currentPosition += 1.0;
+    v.currentPosition += 1;
 
     double ts = simulation.currentTime() + INTERSECTION_CROSS_TIME;
     if (ts < SIMULATION_TIME) {
       simulation.schedule(new EnteredEvent(ts, v, true));
-			// increment the size of the group of the intersection
-			//Increase_Group_size(v);
+      // increment the size of the group of the intersection
+      intersection.increaseGroupSize(v);
     }
     ts = simulation.currentTime() + ROAD_TRAVEL_TIME;
     if (ts < SIMULATION_TIME) {
       simulation.schedule(new DepartureEvent(ts, m_vehicle));
     }
-    northQueue.pop();
   }
 }
 
@@ -157,10 +155,11 @@ void
 DepartureEvent::process(
 )
 {
-	//Decrease_Group_size(departure_data->eventParam.departure_event.vehicle);
+  intersection.decreaseGroupSize(m_vehicle);
+
 	Vehicle v(m_vehicle);
-  if (v.currentPosition != 11.0) {
-    v.currentPosition += 1.0;
+  if (v.currentPosition != 11) {
+    v.currentPosition += 1;
     double ts = simulation.currentTime();
     if (ts < SIMULATION_TIME) {
 			simulation.schedule(new ArrivalEvent(ts, v));
@@ -200,6 +199,7 @@ main(
   srand((unsigned int)time(NULL));
 
   Vehicle firstV;
+  firstV.id = 0;
 
   // Set timestamp of the first arrival.
   double startTime = randexp(NB_INTER_ARRIVAL_TIME);

@@ -2,6 +2,7 @@
 #define INTERSECTION_HPP_
 
 #include <cstdlib>
+#include <queue>
 #include <vector>
 
 
@@ -19,22 +20,106 @@ public:
 
 public:
   void
+  addToQueue(
+    const Vehicle&
+  );
+
+  unsigned
+  queueSize(
+    const Vehicle&
+  ) const;
+
+  Vehicle
+  frontVehicle(
+    const Vehicle&
+  );
+
+  void
+  increaseGroupSize(
+    const Vehicle&
+  );
+
+  void
+  decreaseGroupSize(
+    const Vehicle&
+  );
+
+  unsigned
+  groupSize(
+    const Vehicle&
+  ) const;
+
+  void
   updateSignalStates(
     const double
   );
 
   Intersection::SignalState
-  getSignalState(
+  signalState(
     const Vehicle&
   ) const;
 
 private:
+  std::vector<std::queue<Vehicle> > m_queue;
+  std::vector<unsigned> m_groupSize;
   std::vector<SignalState> m_states;
 }; // class IntersectionState
 
 Intersection::Intersection(
-) : m_states(static_cast<size_t>(Street::Fifteenth))
+) : m_queue(static_cast<size_t>(Street::Fifteenth)),
+  m_groupSize(static_cast<size_t>(Street::Fifteenth)),
+  m_states(static_cast<size_t>(Street::Fifteenth))
 {
+}
+
+void
+Intersection::addToQueue(
+  const Vehicle& v
+)
+{
+  m_queue[v.currentPosition].push(v);
+}
+
+unsigned
+Intersection::queueSize(
+  const Vehicle& v
+) const
+{
+  return m_queue[v.currentPosition].size();
+}
+
+Vehicle
+Intersection::frontVehicle(
+  const Vehicle& v
+)
+{
+  Vehicle frontV(m_queue[v.currentPosition].front());
+  m_queue[v.currentPosition].pop();
+  return frontV;
+}
+
+void
+Intersection::increaseGroupSize(
+  const Vehicle& v
+)
+{
+  m_groupSize[v.currentPosition] += 1;
+}
+
+void
+Intersection::decreaseGroupSize(
+  const Vehicle& v
+)
+{
+  m_groupSize[v.currentPosition] -= 1;
+}
+
+unsigned
+Intersection::groupSize(
+  const Vehicle& v
+) const
+{
+  return m_groupSize[v.currentPosition];
 }
 
 void
@@ -51,7 +136,7 @@ Intersection::updateSignalStates(
 }
 
 Intersection::SignalState
-Intersection::getSignalState(
+Intersection::signalState(
   const Vehicle& v
 ) const
 {

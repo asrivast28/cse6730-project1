@@ -18,7 +18,7 @@ typedef struct {
   double startWaiting; // Time at which the vehicle started waiting at the previous intersection.
   double endWaiting; // Time at which the vehicle passed the previous intersection.
   double totalWaiting; // Total waiting time for the vehicle;
-	double currentPosition; // Indicate the current position of the vehicle.
+	unsigned currentPosition; // Indicate the current position of the vehicle.
 } Vehicle;
 
 
