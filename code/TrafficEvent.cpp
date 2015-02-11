@@ -18,6 +18,8 @@ Intersection intersection;
 Simulation simulation;
 std::queue<Vehicle> northQueue;
 
+
+/* -----------------------------------------  Implementation of TrafficEvent methods. ----------------------------------------- */
 TrafficEvent::TrafficEvent(
   const double timestamp,
   const Vehicle& vehicle,
@@ -33,6 +35,8 @@ TrafficEvent::~TrafficEvent(
 {
 }
 
+
+/* -----------------------------------------  Implementation of ArrivalEvent methods. ----------------------------------------- */
 ArrivalEvent::ArrivalEvent(
   const double timestamp,
   const Vehicle& vehicle,
@@ -102,6 +106,8 @@ ArrivalEvent::process(
 	}
 }
 
+
+/* -----------------------------------------  Implementation of EnteredEvent methods. ----------------------------------------- */
 EnteredEvent::EnteredEvent(
   const double timestamp,
   const Vehicle& vehicle,
@@ -137,6 +143,8 @@ EnteredEvent::process(
   }
 }
 
+
+/* -----------------------------------------  Implementation of DepartureEvent methods. ----------------------------------------- */
 DepartureEvent::DepartureEvent(
   const double timestamp,
   const Vehicle& vehicle,
@@ -164,6 +172,7 @@ DepartureEvent::process(
   }
 }
 
+/* -----------------------------------------  Implementation of main function. ----------------------------------------- */
 /**
  * @brief  Main function which is called to start the simulator.
  *

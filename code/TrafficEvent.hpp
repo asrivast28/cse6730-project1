@@ -22,6 +22,9 @@ typedef struct {
 } Vehicle;
 
 
+/**
+ * @brief Base class for all the traffic events.
+ */
 class TrafficEvent : public Event {
 public:
   TrafficEvent(
@@ -36,9 +39,12 @@ public:
 protected:
   const Vehicle m_vehicle;
   const bool m_continued;
-};
+}; // class TrafficEvent
 
 
+/**
+ * @brief Class for intersection arrival event.
+ */
 class ArrivalEvent : public TrafficEvent {
 public:
   ArrivalEvent(
@@ -49,8 +55,11 @@ public:
 
   void
   process();
-};
+}; // class ArrivalEvent
 
+/**
+ * @brief Class for intersection entry event.
+ */
 class EnteredEvent : public TrafficEvent {
 public:
   EnteredEvent(
@@ -61,8 +70,11 @@ public:
 
   void
   process();
-};
+}; // class EnteredEvent
 
+/**
+ * @brief Class for intersection departure event.
+ */
 class DepartureEvent : public TrafficEvent {
 public:
   DepartureEvent(
@@ -73,6 +85,6 @@ public:
 
   void
   process();
-};
+}; // class DepartureEvent
 
 #endif // TRAFFICEVENT_HPP_
