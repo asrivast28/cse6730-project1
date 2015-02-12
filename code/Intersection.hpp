@@ -127,9 +127,14 @@ Intersection::updateSignalStates(
   const double currentTime
 )
 {
-	int segement = currentTime / 10;
-	int residual = segement % 2;
-  SignalState state = (residual == 0) ? GREEN_THRU : RED;
+	double segment = std::remainder(currentTime, 87.6);
+  SignalState state = RED;
+  if (std::islessequal(segment, 34.7)) {
+    state = GREEN_THRU;
+  }
+  else if (std::islessequal(segment, 38.3)) {
+    state = YELLOW;
+  }
   for (int s = Street::Tenth; s < Street::Fifteenth; ++s) {
     m_states[s] = state;
   }

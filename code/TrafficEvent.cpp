@@ -75,8 +75,8 @@ ArrivalEvent::process(
     }
   }
 
-  // if intersect state is GREEN_THRU and there are no cars in the queue, then the vehicle can immediately
-  // enter the intersection,to schedule the entered event
+  // if intersection state is GREEN_THRU and there are no cars in the queue, then the vehicle can immediately
+  // enter the intersection
 
   intersection.updateSignalStates(simulation.currentTime());
   Intersection::SignalState signal = intersection.signalState(v);
@@ -134,6 +134,7 @@ EnteredEvent::process(
       // increment the size of the group of the intersection
       intersection.increaseGroupSize(v);
     }
+		//schedule the departure_event
     ts = simulation.currentTime() + ROAD_TRAVEL_TIME;
     if (ts < SIMULATION_TIME) {
       simulation.schedule(new DepartureEvent(ts, m_vehicle));

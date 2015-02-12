@@ -1,6 +1,7 @@
 #ifndef EVENT_HPP_
 #define EVENT_HPP_
 
+#include <cmath>
 #include <memory>
 
 /**
@@ -29,7 +30,7 @@ public:
 
 private:
 	double m_timestamp;					// event time stamp
-};
+}; // class Event
 
 class EventComparator {
 public:
@@ -39,9 +40,8 @@ public:
     const std::shared_ptr<Event>& e2
   )
   {
-    return (e1->timestamp() < e2->timestamp());
+    return std::isgreater(e1->timestamp(), e2->timestamp());
   }
-
-};
+}; // class EventComparator
 
 #endif // EVENT_HPP_
