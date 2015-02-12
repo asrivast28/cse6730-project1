@@ -10,7 +10,9 @@
  */
 double urand(void) {
 	double x;
-	while ((x = (rand() / (double) RAND_MAX)) >= 1.0);		// loop until x < 1
+  do {
+    x = std::rand() / static_cast<double>(RAND_MAX);
+  } while (std::isgreaterequal(x, 1.0));		// loop until x < 1
 	return x;
 }
 
