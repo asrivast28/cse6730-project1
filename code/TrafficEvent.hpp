@@ -15,8 +15,7 @@ typedef struct {
   Street destination; // Destination street of the vehicle.
   double entryTime; // Time at which the vehicle crossed the area of interest.
   double exitTime; // Time at which the vehicle exited from the area of interest.
-  double startWaiting; // Time at which the vehicle started waiting at the previous intersection.
-  double endWaiting; // Time at which the vehicle passed the previous intersection.
+  double waitingSince; // Time at which the vehicle started waiting.
   double totalWaiting; // Total waiting time for the vehicle;
 	unsigned currentPosition; // Indicate the current position of the vehicle.
 } Vehicle;

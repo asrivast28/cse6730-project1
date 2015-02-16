@@ -77,45 +77,50 @@ ArrivalEvent::process(
 )
 {
   Log() << "Processing arrival event for vehicle id: " << m_vehicle.id << " at time: " << simulation.currentTime();
-  Vehicle v(m_vehicle);
-  v.entryTime = simulation.currentTime();	 // set time vehicle start waiting (now)
 
+  // get the signal state for the intersection where the vehicle has arrived
   intersection.updateSignalStates(simulation.currentTime());
   Intersection::SignalState signal = intersection.signalState(m_vehicle);
+  // get the queue size for the intersection where the vehicle has arrived
   unsigned queueSize = intersection.queueSize(m_vehicle);
 
+  // if the signal is green then schedule crossed events
   if (signal == Intersection::GREEN_THRU) {
+    // schedule the crossed event after the time it takes to cross an intersection
     double ts = simulation.currentTime() + INTERSECTION_CROSS_TIME;
-    if (ts < options.cutoffTime()) {
+    // schedule new arrival only if the computed time stamp is less than the cutoff
+    if (std::isless(ts, options.cutoffTime())) {
       if (queueSize > 0) {
+        // if there is a queue then schedule crossed event for the first vehicle
         Vehicle v(intersection.frontVehicle(m_vehicle));
-        v.endWaiting = simulation.currentTime();
-        v.totalWaiting += (v.endWaiting - v.startWaiting);
+        // end waiting for the vehicle, if it was waiting
+        v.totalWaiting += (simulation.currentTime() - v.waitingSince);
+        // reset waiting time
+        v.waitingSince = 0.0;
         simulation.schedule(new CrossedEvent(ts, v));
       }
-      else { 
-        Vehicle v(m_vehicle);
-        v.endWaiting = simulation.currentTime();
-        v.totalWaiting += (v.startWaiting - v.endWaiting);
-        double ts = simulation.currentTime() + INTERSECTION_CROSS_TIME;
-        simulation.schedule(new CrossedEvent(ts, v));
+      else {
+        // if there is no queue then schedule crossed event for this vehicle
+        simulation.schedule(new CrossedEvent(ts, m_vehicle));
       }
     }
   }
   if ((signal != Intersection::GREEN_THRU) || (queueSize > 0)) {
-    v.startWaiting = simulation.currentTime();
+    // if the signal state is not green or if there is a queue,
+    // add the current vehicle to the back of the queue
+    Vehicle v(m_vehicle);
+    v.waitingSince = simulation.currentTime();
     intersection.addToQueue(v);
   }
-  //if it is the begining point, could schedule a new arrival event
-  // Compute the time-stamp of the new arrival, and only schedule a new arrival
-  // if it is less than the maximum allowed time-stamp
-  //just for simplicity, assume the vehicle only coming from the beginning point
+  // compute timestamp for arrival of the next vehicle
   double ts = simulation.currentTime() + randexp(NB_INTER_ARRIVAL_TIME);
-  // Schedule new arrival only if the computed time stamp is less than maximum.
-  if (ts < options.cutoffTime()) {
-    // create new arrival event with a new vehicle
-    Vehicle newVehicle;
-    newVehicle.id = v.id + 1;
+  // schedule new arrival only if the computed time stamp is less than the cutoff
+  if (std::isless(ts, options.cutoffTime())) {
+    // create new arrival event with a new vehicle and value initialize the struct
+    Vehicle newVehicle = {};
+    // assign the next id to this vehicle
+    newVehicle.id = m_vehicle.id + 1;
+    //just for simplicity, assume the vehicle only coming from the beginning point
     newVehicle.currentPosition = 10;
     simulation.schedule(new ArrivalEvent(ts, newVehicle));
   }
@@ -137,23 +142,26 @@ CrossedEvent::process(
 )
 {
   Log() << "Processing crossed event for vehicle id: " << m_vehicle.id << " at time: " << simulation.currentTime();
+  // compute timestamp for scheduling departure event for this vehicle
   double ts = simulation.currentTime() + ROAD_TRAVEL_TIME;
-  if (ts < options.cutoffTime()) {
-    Vehicle v(m_vehicle);
-    v.currentPosition += 1;
-    simulation.schedule(new DepartureEvent(ts, v));
+  // schedule departure for this vehicle only if the computed time stamp is less than the cutoff
+  if (std::isless(ts, options.cutoffTime())) {
+    simulation.schedule(new DepartureEvent(ts, m_vehicle));
   }
-  unsigned queueSize = intersection.queueSize(m_vehicle);
 
+  unsigned queueSize = intersection.queueSize(m_vehicle);
   if (queueSize > 0) {
     intersection.updateSignalStates(simulation.currentTime());
     Intersection::SignalState signal = intersection.signalState(m_vehicle);
+    // if there is a queue behind the vehicle and the signal is still green,
+    // schedule crossed event for the next vehicle in the queue
     if (signal == Intersection::GREEN_THRU) {
       ts = simulation.currentTime() + INTERSECTION_CROSS_TIME;
-      if (ts < options.cutoffTime()) {
+      if (std::isless(ts, options.cutoffTime())) {
         Vehicle v(intersection.frontVehicle(m_vehicle));
-        v.endWaiting = simulation.currentTime();
-        v.totalWaiting += (v.endWaiting - v.startWaiting);
+        // end waiting for the vehicle
+        v.totalWaiting += (simulation.currentTime() - v.waitingSince);
+        v.waitingSince = 0.0;
         simulation.schedule(new CrossedEvent(ts, v));
       }
     }
@@ -179,16 +187,18 @@ DepartureEvent::process(
   intersection.decreaseGroupSize(m_vehicle);
 
 	Vehicle v(m_vehicle);
+  // increment the position of the current vehicle
+  v.currentPosition += 1;
   if (v.currentPosition != 11) {
-    v.currentPosition += 1;
     double ts = simulation.currentTime();
-    if (ts < options.cutoffTime()) {
+    // schedule an arrival event for this vehicle at the next intersection
+    if (std::isless(ts, options.cutoffTime())) {
 			simulation.schedule(new ArrivalEvent(ts, v));
     }
   }
   else {
     v.exitTime = simulation.currentTime();
-    Log() << "Vehicle with id: " << v.id << " exited at time: " << v.exitTime;
+    Log() << "Vehicle with id: " << v.id << " exited at time: " << v.exitTime << " Total waiting time: " << v.totalWaiting;
     // Collect data from the vehicle.
   }
 }
@@ -265,7 +275,7 @@ main(
   // Seed the random number generator.
   std::srand(options.randomSeed());
 
-  Vehicle firstV;
+  Vehicle firstV = {};
   firstV.id = 0;
   firstV.currentPosition = 10;
 

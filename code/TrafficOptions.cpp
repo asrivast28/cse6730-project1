@@ -26,7 +26,6 @@ TrafficOptions::parse(
   po::store(po::parse_command_line(argc, argv, m_desc), vm);
   po::notify(vm);    
   
-  //if ((argc == 1) || (vm.count("help") > 0)) {
   if (vm.count("help") > 0) {
     std::stringstream ss;
     ss << m_desc;
