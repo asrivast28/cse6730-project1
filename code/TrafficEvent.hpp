@@ -13,7 +13,7 @@ typedef struct {
   unsigned id; // ID of the vehicle.
   Street origin; // Originating street of the vehicle.
   Street destination; // Destination street of the vehicle.
-  double entryTime; // Time at which the vehicle entered the area of interest.
+  double entryTime; // Time at which the vehicle crossed the area of interest.
   double exitTime; // Time at which the vehicle exited from the area of interest.
   double startWaiting; // Time at which the vehicle started waiting at the previous intersection.
   double endWaiting; // Time at which the vehicle passed the previous intersection.
@@ -60,9 +60,9 @@ public:
 /**
  * @brief Class for intersection entry event.
  */
-class EnteredEvent : public TrafficEvent {
+class CrossedEvent : public TrafficEvent {
 public:
-  EnteredEvent(
+  CrossedEvent(
     const double,
     const Vehicle&,
     const bool = false
@@ -70,7 +70,7 @@ public:
 
   void
   process();
-}; // class EnteredEvent
+}; // class CrossedEvent
 
 /**
  * @brief Class for intersection departure event.

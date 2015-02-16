@@ -79,83 +79,84 @@ ArrivalEvent::process(
   Log() << "Processing arrival event for vehicle id: " << m_vehicle.id << " at time: " << simulation.currentTime();
   Vehicle v(m_vehicle);
   v.entryTime = simulation.currentTime();	 // set time vehicle start waiting (now)
-  v.currentPosition = 10;
 
-  double ts = simulation.currentTime() + INTERSECTION_CROSS_TIME;
-  if (ts < SIMULATION_TIME) {
-    // create new Entered event to simulate the vehicle entering the intersection
-    simulation.schedule(new EnteredEvent(ts, v));
-    // update the group size of the intersection
-    intersection.increaseGroupSize(v);
+  intersection.updateSignalStates(simulation.currentTime());
+  Intersection::SignalState signal = intersection.signalState(m_vehicle);
+  unsigned queueSize = intersection.queueSize(m_vehicle);
+
+  if (signal == Intersection::GREEN_THRU) {
+    double ts = simulation.currentTime() + INTERSECTION_CROSS_TIME;
+    if (ts < SIMULATION_TIME) {
+      if (queueSize > 0) {
+        Vehicle v(intersection.frontVehicle(m_vehicle));
+        v.endWaiting = simulation.currentTime();
+        v.totalWaiting += (v.endWaiting - v.startWaiting);
+        simulation.schedule(new CrossedEvent(ts, v));
+      }
+      else { 
+        Vehicle v(m_vehicle);
+        v.endWaiting = simulation.currentTime();
+        v.totalWaiting += (v.startWaiting - v.endWaiting);
+        double ts = simulation.currentTime() + INTERSECTION_CROSS_TIME;
+        simulation.schedule(new CrossedEvent(ts, v));
+      }
+    }
   }
-
-	//if it is the begining point, could schedule a new arrival event
-	// Compute the time-stamp of the new arrival, and only schedule a new arrival
-	// if it is less than the maximum allowed time-stamp
-	//just for simplicity, assume the vehicle only coming from the beginning point
-  ts = simulation.currentTime() + randexp(NB_INTER_ARRIVAL_TIME);
+  if ((signal != Intersection::GREEN_THRU) || (queueSize > 0)) {
+    v.startWaiting = simulation.currentTime();
+    intersection.addToQueue(v);
+  }
+  //if it is the begining point, could schedule a new arrival event
+  // Compute the time-stamp of the new arrival, and only schedule a new arrival
+  // if it is less than the maximum allowed time-stamp
+  //just for simplicity, assume the vehicle only coming from the beginning point
+  double ts = simulation.currentTime() + randexp(NB_INTER_ARRIVAL_TIME);
   // Schedule new arrival only if the computed time stamp is less than maximum.
   if (ts < SIMULATION_TIME) {
     // create new arrival event with a new vehicle
     Vehicle newVehicle;
     newVehicle.id = v.id + 1;
+    newVehicle.currentPosition = 10;
     simulation.schedule(new ArrivalEvent(ts, newVehicle));
   }
 }
 
 
-/* -----------------------------------------  Implementation of EnteredEvent methods. ----------------------------------------- */
-EnteredEvent::EnteredEvent(
+/* -----------------------------------------  Implementation of CrossedEvent methods. ----------------------------------------- */
+CrossedEvent::CrossedEvent(
   const double timestamp,
   const Vehicle& vehicle,
   const bool continued
 ) : TrafficEvent(timestamp, vehicle, continued)
 {
-  Log() << "Scheduled entered event for vehicle id: " << vehicle.id << " at time: " << timestamp;
+  Log() << "Scheduled crossed event for vehicle id: " << vehicle.id << " at time: " << timestamp;
 }
 
 void
-EnteredEvent::process(
+CrossedEvent::process(
 )
 {
-  Log() << "Processing entered event for vehicle id: " << m_vehicle.id << " at time: " << simulation.currentTime();
-  intersection.updateSignalStates(simulation.currentTime());
-  Intersection::SignalState signal = intersection.signalState(m_vehicle);
+  Log() << "Processing crossed event for vehicle id: " << m_vehicle.id << " at time: " << simulation.currentTime();
+  double ts = simulation.currentTime() + ROAD_TRAVEL_TIME;
+  if (ts < SIMULATION_TIME) {
+    Vehicle v(m_vehicle);
+    v.currentPosition += 1;
+    simulation.schedule(new DepartureEvent(ts, v));
+  }
   unsigned queueSize = intersection.queueSize(m_vehicle);
-  if (signal == Intersection::GREEN_THRU) {
-    if (queueSize > 0) {
-      double ts = simulation.currentTime() + INTERSECTION_CROSS_TIME;
-      if (ts < SIMULATION_TIME) {
-        //schedule another enter event
-        Vehicle v(m_vehicle);
-        v.startWaiting = simulation.currentTime();
-        simulation.schedule(new EnteredEvent(ts, v));
-        // increment the size of the group of the intersection
-        intersection.increaseGroupSize(m_vehicle);
-      }
-      //schedule the departure_event
-      ts = simulation.currentTime() + ROAD_TRAVEL_TIME;
+
+  if (queueSize > 0) {
+    intersection.updateSignalStates(simulation.currentTime());
+    Intersection::SignalState signal = intersection.signalState(m_vehicle);
+    if (signal == Intersection::GREEN_THRU) {
+      ts = simulation.currentTime() + INTERSECTION_CROSS_TIME;
       if (ts < SIMULATION_TIME) {
         Vehicle v(intersection.frontVehicle(m_vehicle));
         v.endWaiting = simulation.currentTime();
         v.totalWaiting += (v.endWaiting - v.startWaiting);
-        v.currentPosition += 1;
-        simulation.schedule(new DepartureEvent(ts, v));
+        simulation.schedule(new CrossedEvent(ts, v));
       }
     }
-    else {
-      Vehicle v(m_vehicle);
-      v.endWaiting = simulation.currentTime();
-      v.totalWaiting += (v.startWaiting - v.endWaiting);
-      double ts = simulation.currentTime() + ROAD_TRAVEL_TIME;
-      v.currentPosition += 1;
-      simulation.schedule(new DepartureEvent(ts, v));
-    }
-  }
-  else {
-    Vehicle v(m_vehicle);
-    v.startWaiting = simulation.currentTime();
-    intersection.addToQueue(v);
   }
 }
 
@@ -221,6 +222,7 @@ main(
 
   Vehicle firstV;
   firstV.id = 0;
+  firstV.currentPosition = 10;
 
   // Set timestamp of the first arrival.
   double startTime = randexp(NB_INTER_ARRIVAL_TIME);
