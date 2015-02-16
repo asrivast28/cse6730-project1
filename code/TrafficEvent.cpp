@@ -41,7 +41,6 @@ public:
 
 
 Intersection intersection;
-Simulation simulation;
 TrafficOptions options;
 
 
@@ -74,6 +73,7 @@ ArrivalEvent::ArrivalEvent(
 
 void
 ArrivalEvent::process(
+  Simulation& simulation
 )
 {
   Log() << "Processing arrival event for vehicle id: " << m_vehicle.id << " at time: " << simulation.currentTime();
@@ -139,6 +139,7 @@ CrossedEvent::CrossedEvent(
 
 void
 CrossedEvent::process(
+  Simulation& simulation
 )
 {
   Log() << "Processing crossed event for vehicle id: " << m_vehicle.id << " at time: " << simulation.currentTime();
@@ -181,6 +182,7 @@ DepartureEvent::DepartureEvent(
 
 void
 DepartureEvent::process(
+  Simulation& simulation
 )
 {
   Log() << "Processing departure event for vehicle id: " << m_vehicle.id << " at time: " << simulation.currentTime();
@@ -214,6 +216,7 @@ ArrivalEventLeft::ArrivalEventLeft(
 
 void
 ArrivalEventLeft::process(
+  Simulation& simulation
 )
 {
 }
@@ -230,6 +233,7 @@ CrossedEventLeft::CrossedEventLeft(
 
 void
 CrossedEventLeft::process(
+  Simulation& simulation
 )
 {
 }
@@ -246,6 +250,7 @@ DepartureEventLeft::DepartureEventLeft(
 
 void
 DepartureEventLeft::process(
+  Simulation& simulation
 )
 {
 }
@@ -275,14 +280,17 @@ main(
   // Seed the random number generator.
   std::srand(options.randomSeed());
 
+  // create a new simulation object
+  Simulation simulation;
+
+  // compute timestamp of the first arrival
+  double startTime = randexp(NB_INTER_ARRIVAL_TIME);
+
+
+  // create the first vehicle and schedule an arrival event at the start time
   Vehicle firstV = {};
   firstV.id = 0;
   firstV.currentPosition = 10;
-
-  // Set timestamp of the first arrival.
-  double startTime = randexp(NB_INTER_ARRIVAL_TIME);
-
-  // Set timestamp of the first arrival.
   simulation.schedule(new ArrivalEvent(startTime, firstV));
 
   // Run the simulation.

@@ -4,6 +4,8 @@
 #include <cmath>
 #include <memory>
 
+class Simulation;
+
 /**
  * @brief Class containing simulation event attributes.
  */
@@ -23,7 +25,9 @@ public:
 
   virtual
   void
-  process() = 0;
+  process(
+    Simulation&
+  ) = 0;
 
   virtual
   ~Event();

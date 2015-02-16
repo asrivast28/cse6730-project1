@@ -53,7 +53,9 @@ public:
   );
 
   void
-  process();
+  process(
+    Simulation&
+  );
 }; // class ArrivalEvent
 
 /**
@@ -68,7 +70,9 @@ public:
   );
 
   void
-  process();
+  process(
+    Simulation&
+  );
 }; // class CrossedEvent
 
 /**
@@ -83,7 +87,9 @@ public:
   );
 
   void
-  process();
+  process(
+    Simulation&
+  );
 }; // class DepartureEvent
 
 /**
@@ -98,7 +104,9 @@ public:
   );
 
   void
-  process();
+  process(
+    Simulation&
+  );
 }; // class ArrivalEventLeft
 
 /**
@@ -113,7 +121,9 @@ public:
   );
 
   void
-  process();
+  process(
+    Simulation&
+  );
 }; // class CrossedEventLeft
 
 /**
@@ -128,7 +138,9 @@ public:
   );
 
   void
-  process();
+  process(
+    Simulation&
+  );
 }; // class DepartureEventLeft
 
 #endif // TRAFFICEVENT_HPP_

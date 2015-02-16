@@ -14,7 +14,7 @@ Simulation::run(
     const std::shared_ptr<Event> event(m_fel.top());
     m_fel.pop();
     m_simtime = event->timestamp();
-    event->process();
+    event->process(*this);
   }
 }
 
