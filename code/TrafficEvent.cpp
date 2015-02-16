@@ -3,7 +3,7 @@
 #include "Distribution.hpp"
 #include "Intersection.hpp"
 #include "Simulation.hpp"
-#include "TrafficOptions.hpp"
+#include "TrafficParameters.hpp"
 
 #include <iostream>
 #include <queue>
@@ -41,7 +41,7 @@ public:
 
 
 Intersection intersection;
-TrafficOptions options;
+TrafficParameters parameters;
 
 
 /* -----------------------------------------  Implementation of TrafficEvent methods. ----------------------------------------- */
@@ -89,7 +89,7 @@ ArrivalEvent::process(
     // schedule the crossed event after the time it takes to cross an intersection
     double ts = simulation.currentTime() + INTERSECTION_CROSS_TIME;
     // schedule new arrival only if the computed time stamp is less than the cutoff
-    if (std::isless(ts, options.cutoffTime())) {
+    if (std::isless(ts, parameters.cutoffTime())) {
       if (queueSize > 0) {
         // if there is a queue then schedule crossed event for the first vehicle
         Vehicle v(intersection.frontVehicle(m_vehicle));
@@ -115,7 +115,7 @@ ArrivalEvent::process(
   // compute timestamp for arrival of the next vehicle
   double ts = simulation.currentTime() + randexp(NB_INTER_ARRIVAL_TIME);
   // schedule new arrival only if the computed time stamp is less than the cutoff
-  if (std::isless(ts, options.cutoffTime())) {
+  if (std::isless(ts, parameters.cutoffTime())) {
     // create new arrival event with a new vehicle and value initialize the struct
     Vehicle newVehicle = {};
     // assign the next id to this vehicle
@@ -146,7 +146,7 @@ CrossedEvent::process(
   // compute timestamp for scheduling departure event for this vehicle
   double ts = simulation.currentTime() + ROAD_TRAVEL_TIME;
   // schedule departure for this vehicle only if the computed time stamp is less than the cutoff
-  if (std::isless(ts, options.cutoffTime())) {
+  if (std::isless(ts, parameters.cutoffTime())) {
     simulation.schedule(new DepartureEvent(ts, m_vehicle));
   }
 
@@ -158,7 +158,7 @@ CrossedEvent::process(
     // schedule crossed event for the next vehicle in the queue
     if (signal == Intersection::GREEN_THRU) {
       ts = simulation.currentTime() + INTERSECTION_CROSS_TIME;
-      if (std::isless(ts, options.cutoffTime())) {
+      if (std::isless(ts, parameters.cutoffTime())) {
         Vehicle v(intersection.frontVehicle(m_vehicle));
         // end waiting for the vehicle
         v.totalWaiting += (simulation.currentTime() - v.waitingSince);
@@ -194,7 +194,7 @@ DepartureEvent::process(
   if (v.currentPosition != 11) {
     double ts = simulation.currentTime();
     // schedule an arrival event for this vehicle at the next intersection
-    if (std::isless(ts, options.cutoffTime())) {
+    if (std::isless(ts, parameters.cutoffTime())) {
 			simulation.schedule(new ArrivalEvent(ts, v));
     }
   }
@@ -270,7 +270,7 @@ main(
 )
 {
   try {
-    options.parse(argc, argv);
+    parameters.parse(argc, argv);
   }
   catch (po::error& pe) {
     std::cerr << pe.what() << std::endl;
@@ -278,7 +278,7 @@ main(
   }
 
   // Seed the random number generator.
-  std::srand(options.randomSeed());
+  std::srand(parameters.randomSeed());
 
   // create a new simulation object
   Simulation simulation;
