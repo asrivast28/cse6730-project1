@@ -42,6 +42,7 @@ public:
 
 Intersection intersection;
 TrafficParameters parameters;
+std::vector<Vehicle> exitedVehicles;
 
 
 /* -----------------------------------------  Implementation of TrafficEvent methods. ----------------------------------------- */
@@ -201,6 +202,7 @@ DepartureEvent::process(
   else {
     v.exitTime = simulation.currentTime();
     Log() << "Vehicle with id: " << v.id << " exited at time: " << v.exitTime << " Total waiting time: " << v.totalWaiting;
+    exitedVehicles.push_back(v);
     // Collect data from the vehicle.
   }
 }
@@ -286,7 +288,6 @@ main(
   // compute timestamp of the first arrival
   double startTime = randexp(NB_INTER_ARRIVAL_TIME);
 
-
   // create the first vehicle and schedule an arrival event at the start time
   Vehicle firstV = {};
   firstV.id = 0;
@@ -295,6 +296,19 @@ main(
 
   // Run the simulation.
   simulation.run();
+
+  if (exitedVehicles.size() > 0) {
+    double averageWaiting = 0.0;
+    for (const Vehicle& v : exitedVehicles) {
+      averageWaiting += v.totalWaiting;
+    }
+    averageWaiting /= exitedVehicles.size();
+
+    std::cout << "Average waiting time for " << exitedVehicles.size() << " vehicles, that crossed the stretch, was: " << averageWaiting << std::endl;
+  }
+  else {
+    std::cout << "No vehicles crossed the stretch! Something went wrong." << std::endl;
+  }
 
   return 0;
 }
