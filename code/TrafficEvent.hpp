@@ -87,4 +87,49 @@ public:
   process();
 }; // class DepartureEvent
 
+/**
+ * @brief Class for intersection arrival event.
+ */
+class ArrivalEventLeft : public TrafficEvent {
+public:
+  ArrivalEventLeft(
+    const double,
+    const Vehicle&,
+    const bool = false
+  );
+
+  void
+  process();
+}; // class ArrivalEventLeft
+
+/**
+ * @brief Class for intersection entry event.
+ */
+class CrossedEventLeft : public TrafficEvent {
+public:
+  CrossedEventLeft(
+    const double,
+    const Vehicle&,
+    const bool = false
+  );
+
+  void
+  process();
+}; // class CrossedEventLeft
+
+/**
+ * @brief Class for intersection departure event.
+ */
+class DepartureEventLeft : public TrafficEvent {
+public:
+  DepartureEventLeft(
+    const double,
+    const Vehicle&,
+    const bool = false
+  );
+
+  void
+  process();
+}; // class DepartureEventLeft
+
 #endif // TRAFFICEVENT_HPP_

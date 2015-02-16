@@ -193,6 +193,52 @@ DepartureEvent::process(
   }
 }
 
+/* -----------------------------------------  Implementation of ArrivalEventLeft methods. ----------------------------------------- */
+ArrivalEventLeft::ArrivalEventLeft(
+  const double timestamp,
+  const Vehicle& vehicle,
+  const bool continued
+) : TrafficEvent(timestamp, vehicle, continued)
+{
+}
+
+void
+ArrivalEventLeft::process(
+)
+{
+}
+
+
+/* -----------------------------------------  Implementation of CrossedEventLeft methods. ----------------------------------------- */
+CrossedEventLeft::CrossedEventLeft(
+  const double timestamp,
+  const Vehicle& vehicle,
+  const bool continued
+) : TrafficEvent(timestamp, vehicle, continued)
+{
+}
+
+void
+CrossedEventLeft::process(
+)
+{
+}
+
+
+/* -----------------------------------------  Implementation of DepartureEventLeft methods. ----------------------------------------- */
+DepartureEventLeft::DepartureEventLeft(
+  const double timestamp,
+  const Vehicle& vehicle,
+  const bool continued
+) : TrafficEvent(timestamp, vehicle, continued)
+{
+}
+
+void
+DepartureEventLeft::process(
+)
+{
+}
 /* -----------------------------------------  Implementation of main function. ----------------------------------------- */
 /**
  * @brief  Main function which is called to start the simulator.
