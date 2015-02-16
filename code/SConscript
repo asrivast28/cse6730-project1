@@ -10,7 +10,7 @@ if platform.system() == 'Darwin':
   cppLibs = [lib + '-mt' for lib in cppLibs]
 
 srcFiles = [
-            'ProgramOptions.cpp',
+            'TrafficOptions.cpp',
             'Event.cpp',
             'Simulation.cpp',
             'TrafficEvent.cpp',

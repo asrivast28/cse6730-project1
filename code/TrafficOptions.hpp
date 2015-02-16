@@ -1,5 +1,5 @@
-#ifndef PROGRAMOPTIONS_HPP_
-#define PROGRAMOPTIONS_HPP_
+#ifndef TRAFFICOPTIONS_HPP_
+#define TRAFFICOPTIONS_HPP_
 
 #include <string>
 
@@ -10,9 +10,9 @@ namespace po = boost::program_options;
 /**
  * @brief  Utility class for parsing command line arguments. 
  */
-class ProgramOptions {
+class TrafficOptions {
 public:
-  ProgramOptions();
+  TrafficOptions();
 
   void
   parse(
@@ -26,12 +26,12 @@ public:
   double
   cutoffTime() const { return m_cutoffTime; }
 
-  ~ProgramOptions() { }
+  ~TrafficOptions() { }
   
 private:
   po::options_description m_desc;
   double m_cutoffTime;
   unsigned m_randomSeed;
-}; // class ProgramOptions
+}; // class TrafficOptions
 
-#endif // PROGRAMOPTIONS_HPP_
+#endif // TRAFFICOPTIONS_HPP_

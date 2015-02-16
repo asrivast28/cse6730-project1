@@ -1,9 +1,9 @@
-#include "ProgramOptions.hpp"
+#include "TrafficOptions.hpp"
 
 #include <sstream>
 
 
-ProgramOptions::ProgramOptions(
+TrafficOptions::TrafficOptions(
 ) : m_desc("Traffic simulator options"),
   m_cutoffTime(14400),
   m_randomSeed(std::time(0))
@@ -17,7 +17,7 @@ ProgramOptions::ProgramOptions(
 }
 
 void
-ProgramOptions::parse(
+TrafficOptions::parse(
   int argc,
   char** argv
 )

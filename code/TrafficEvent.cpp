@@ -2,8 +2,8 @@
 
 #include "Distribution.hpp"
 #include "Intersection.hpp"
-#include "ProgramOptions.hpp"
 #include "Simulation.hpp"
+#include "TrafficOptions.hpp"
 
 #include <iostream>
 #include <queue>
@@ -42,7 +42,7 @@ public:
 
 Intersection intersection;
 Simulation simulation;
-ProgramOptions options;
+TrafficOptions options;
 
 
 /* -----------------------------------------  Implementation of TrafficEvent methods. ----------------------------------------- */
