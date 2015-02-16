@@ -121,7 +121,7 @@ ArrivalEvent::process(
     // assign the next id to this vehicle
     newVehicle.id = m_vehicle.id + 1;
     //just for simplicity, assume the vehicle only coming from the beginning point
-    newVehicle.currentPosition = 10;
+    newVehicle.currentPosition = Street::Tenth;
     simulation.schedule(new ArrivalEvent(ts, newVehicle));
   }
 }
@@ -190,8 +190,8 @@ DepartureEvent::process(
 
 	Vehicle v(m_vehicle);
   // increment the position of the current vehicle
-  v.currentPosition += 1;
-  if (v.currentPosition != 11) {
+  v.currentPosition = static_cast<Street>(static_cast<int>(v.currentPosition) + 1);
+  if (v.currentPosition != Street::Eleventh) {
     double ts = simulation.currentTime();
     // schedule an arrival event for this vehicle at the next intersection
     if (std::isless(ts, parameters.cutoffTime())) {
@@ -290,7 +290,7 @@ main(
   // create the first vehicle and schedule an arrival event at the start time
   Vehicle firstV = {};
   firstV.id = 0;
-  firstV.currentPosition = 10;
+  firstV.currentPosition = Street::Tenth;
   simulation.schedule(new ArrivalEvent(startTime, firstV));
 
   // Run the simulation.
