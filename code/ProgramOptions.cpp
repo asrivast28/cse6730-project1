@@ -4,11 +4,15 @@
 
 
 ProgramOptions::ProgramOptions(
-) : m_desc("Traffic simulator options")
+) : m_desc("Traffic simulator options"),
+  m_cutoffTime(14400),
+  m_randomSeed(std::time(0))
 {
   po::options_description desc;
   m_desc.add_options()
     ("help,h", "Print this message.")
+    ("seed", po::value<unsigned>(&m_randomSeed), "Random seed value.")
+    ("time", po::value<double>(&m_cutoffTime), "Cutoff time (in seconds).")
     ;
 }
 

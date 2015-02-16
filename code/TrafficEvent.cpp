@@ -9,7 +9,6 @@
 #include <queue>
 
 #define INTERSECTION_CROSS_TIME 1
-#define SIMULATION_TIME 14400
 #define NB_INTER_ARRIVAL_TIME 20
 #define ROAD_TRAVEL_TIME 3
 
@@ -43,6 +42,7 @@ public:
 
 Intersection intersection;
 Simulation simulation;
+ProgramOptions options;
 
 
 /* -----------------------------------------  Implementation of TrafficEvent methods. ----------------------------------------- */
@@ -86,7 +86,7 @@ ArrivalEvent::process(
 
   if (signal == Intersection::GREEN_THRU) {
     double ts = simulation.currentTime() + INTERSECTION_CROSS_TIME;
-    if (ts < SIMULATION_TIME) {
+    if (ts < options.cutoffTime()) {
       if (queueSize > 0) {
         Vehicle v(intersection.frontVehicle(m_vehicle));
         v.endWaiting = simulation.currentTime();
@@ -112,7 +112,7 @@ ArrivalEvent::process(
   //just for simplicity, assume the vehicle only coming from the beginning point
   double ts = simulation.currentTime() + randexp(NB_INTER_ARRIVAL_TIME);
   // Schedule new arrival only if the computed time stamp is less than maximum.
-  if (ts < SIMULATION_TIME) {
+  if (ts < options.cutoffTime()) {
     // create new arrival event with a new vehicle
     Vehicle newVehicle;
     newVehicle.id = v.id + 1;
@@ -138,7 +138,7 @@ CrossedEvent::process(
 {
   Log() << "Processing crossed event for vehicle id: " << m_vehicle.id << " at time: " << simulation.currentTime();
   double ts = simulation.currentTime() + ROAD_TRAVEL_TIME;
-  if (ts < SIMULATION_TIME) {
+  if (ts < options.cutoffTime()) {
     Vehicle v(m_vehicle);
     v.currentPosition += 1;
     simulation.schedule(new DepartureEvent(ts, v));
@@ -150,7 +150,7 @@ CrossedEvent::process(
     Intersection::SignalState signal = intersection.signalState(m_vehicle);
     if (signal == Intersection::GREEN_THRU) {
       ts = simulation.currentTime() + INTERSECTION_CROSS_TIME;
-      if (ts < SIMULATION_TIME) {
+      if (ts < options.cutoffTime()) {
         Vehicle v(intersection.frontVehicle(m_vehicle));
         v.endWaiting = simulation.currentTime();
         v.totalWaiting += (v.endWaiting - v.startWaiting);
@@ -182,7 +182,7 @@ DepartureEvent::process(
   if (v.currentPosition != 11) {
     v.currentPosition += 1;
     double ts = simulation.currentTime();
-    if (ts < SIMULATION_TIME) {
+    if (ts < options.cutoffTime()) {
 			simulation.schedule(new ArrivalEvent(ts, v));
     }
   }
@@ -254,7 +254,6 @@ main(
   char** argv
 )
 {
-  ProgramOptions options;
   try {
     options.parse(argc, argv);
   }
@@ -264,7 +263,7 @@ main(
   }
 
   // Seed the random number generator.
-  std::srand(std::time(0));
+  std::srand(options.randomSeed());
 
   Vehicle firstV;
   firstV.id = 0;

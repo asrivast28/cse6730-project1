@@ -20,10 +20,18 @@ public:
     char**
   );
 
+  unsigned
+  randomSeed() const { return m_randomSeed; }
+
+  double
+  cutoffTime() const { return m_cutoffTime; }
+
   ~ProgramOptions() { }
   
 private:
   po::options_description m_desc;
+  double m_cutoffTime;
+  unsigned m_randomSeed;
 }; // class ProgramOptions
 
 #endif // PROGRAMOPTIONS_HPP_
