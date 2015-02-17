@@ -2,6 +2,7 @@
 #define TRAFFICPARAMETERS_HPP_
 
 #include <string>
+#include <unordered_map>
 
 #include <boost/program_options.hpp>
 
@@ -20,17 +21,20 @@ public:
     char**
   );
 
+  double
+  get(
+    const std::string&
+  ) const;
+
   unsigned
   randomSeed() const { return m_randomSeed; }
-
-  double
-  cutoffTime() const { return m_cutoffTime; }
 
   ~TrafficParameters() { }
   
 private:
   po::options_description m_desc;
-  double m_cutoffTime;
+  std::unordered_map<std::string, double> m_paramMap;
+  std::string m_paramFile;
   unsigned m_randomSeed;
 }; // class TrafficParameters
 

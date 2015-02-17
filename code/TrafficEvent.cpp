@@ -8,10 +8,6 @@
 #include <iostream>
 #include <queue>
 
-#define INTERSECTION_CROSS_TIME 1
-#define NB_INTER_ARRIVAL_TIME 20
-#define ROAD_TRAVEL_TIME 3
-
 /**
  * @brief Class for logging debug messages.
  */
@@ -88,9 +84,9 @@ ArrivalEvent::process(
   // if the signal is green then schedule crossed events
   if (signal == Intersection::GREEN_THRU) {
     // schedule the crossed event after the time it takes to cross an intersection
-    double ts = simulation.currentTime() + INTERSECTION_CROSS_TIME;
+    double ts = simulation.currentTime() + parameters.get("INTERSECTION_CROSS_TIME");
     // schedule new arrival only if the computed time stamp is less than the cutoff
-    if (std::isless(ts, parameters.cutoffTime())) {
+    if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
       if (queueSize > 0) {
         // if there is a queue then schedule crossed event for the first vehicle
         Vehicle v(intersection.frontVehicle(m_vehicle));
@@ -114,9 +110,9 @@ ArrivalEvent::process(
     intersection.addToQueue(v);
   }
   // compute timestamp for arrival of the next vehicle
-  double ts = simulation.currentTime() + randexp(NB_INTER_ARRIVAL_TIME);
+  double ts = simulation.currentTime() + randexp(parameters.get("NB_INTER_ARRIVAL_TIME"));
   // schedule new arrival only if the computed time stamp is less than the cutoff
-  if (std::isless(ts, parameters.cutoffTime())) {
+  if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
     // create new arrival event with a new vehicle and value initialize the struct
     Vehicle newVehicle = {};
     // assign the next id to this vehicle
@@ -145,9 +141,9 @@ CrossedEvent::process(
 {
   Log() << "Processing crossed event for vehicle id: " << m_vehicle.id << " at time: " << simulation.currentTime();
   // compute timestamp for scheduling departure event for this vehicle
-  double ts = simulation.currentTime() + ROAD_TRAVEL_TIME;
+  double ts = simulation.currentTime() + parameters.get("ROAD_TRAVEL_TIME");
   // schedule departure for this vehicle only if the computed time stamp is less than the cutoff
-  if (std::isless(ts, parameters.cutoffTime())) {
+  if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
     simulation.schedule(new DepartureEvent(ts, m_vehicle));
   }
 
@@ -158,8 +154,8 @@ CrossedEvent::process(
     // if there is a queue behind the vehicle and the signal is still green,
     // schedule crossed event for the next vehicle in the queue
     if (signal == Intersection::GREEN_THRU) {
-      ts = simulation.currentTime() + INTERSECTION_CROSS_TIME;
-      if (std::isless(ts, parameters.cutoffTime())) {
+      ts = simulation.currentTime() + parameters.get("INTERSECTION_CROSS_TIME");
+      if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
         Vehicle v(intersection.frontVehicle(m_vehicle));
         // end waiting for the vehicle
         v.totalWaiting += (simulation.currentTime() - v.waitingSince);
@@ -195,15 +191,15 @@ DepartureEvent::process(
   if (v.currentPosition != Street::Eleventh) {
     double ts = simulation.currentTime();
     // schedule an arrival event for this vehicle at the next intersection
-    if (std::isless(ts, parameters.cutoffTime())) {
+    if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
 			simulation.schedule(new ArrivalEvent(ts, v));
     }
   }
   else {
     v.exitTime = simulation.currentTime();
     Log() << "Vehicle with id: " << v.id << " exited at time: " << v.exitTime << " Total waiting time: " << v.totalWaiting;
-    exitedVehicles.push_back(v);
     // Collect data from the vehicle.
+    exitedVehicles.push_back(v);
   }
 }
 
@@ -256,6 +252,7 @@ DepartureEventLeft::process(
 )
 {
 }
+
 /* -----------------------------------------  Implementation of main function. ----------------------------------------- */
 /**
  * @brief  Main function which is called to start the simulator.
@@ -286,7 +283,7 @@ main(
   Simulation simulation;
 
   // compute timestamp of the first arrival
-  double startTime = randexp(NB_INTER_ARRIVAL_TIME);
+  double startTime = randexp(parameters.get("NB_INTER_ARRIVAL_TIME"));
 
   // create the first vehicle and schedule an arrival event at the start time
   Vehicle firstV = {};
