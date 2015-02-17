@@ -5,6 +5,7 @@
 #include "Event.hpp"
 
 typedef enum { Tenth = 10, Eleventh, Twelfth, Thirteenth, Fourteenth, Fifteenth } Street;
+typedef enum { Left, Right, Through } Direction;
 
 /**
  * @brief Structure for storing all the information for a vehicle.
@@ -17,7 +18,8 @@ typedef struct {
   double entryTime; // Time at which the vehicle crossed the area of interest.
   double exitTime; // Time at which the vehicle exited from the area of interest.
   double waitingSince; // Time at which the vehicle started waiting.
-  double totalWaiting; // Total waiting time for the vehicle;
+  double totalWaiting; // Total waiting time for the vehicle.
+  Direction turn; // Turning direction of the vehicle.
 } Vehicle;
 
 
