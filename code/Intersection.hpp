@@ -31,8 +31,13 @@ public:
     const Vehicle&
   ) const;
 
+  const Vehicle&
+  viewFrontVehicle(
+    const Vehicle&
+  ) const;
+
   Vehicle
-  frontVehicle(
+  getFrontVehicle(
     const Vehicle&
   );
 

@@ -1,13 +1,14 @@
 #include "TrafficParameters.hpp"
 
 #include <fstream>
+#include <iostream>
 #include <sstream>
 
 
 TrafficParameters::TrafficParameters(
 ) : m_desc("Traffic simulator options"),
   m_paramMap(),
-  m_paramFile(),
+  m_paramFile("parameters.txt"),
   m_randomSeed(std::time(0))
 {
   po::options_description desc;
@@ -42,7 +43,7 @@ TrafficParameters::parse(
     throw po::error(ss.str());
   }
   else if (vm.count("parameters") == 0) {
-    throw po::error("No parameter file provided! Can't run without a parameter file.");
+    std::cerr << "No parameter file provided. Using default file \"" << m_paramFile << "\"." << std::endl;
   }
 
   std::fstream params(m_paramFile, std::ifstream::in);

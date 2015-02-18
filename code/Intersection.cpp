@@ -15,7 +15,7 @@ Intersection::addToQueue(
   const Vehicle& v
 )
 {
-  m_queue[v.currentPosition].push(v);
+  m_queue[v.position].push(v);
 }
 
 unsigned
@@ -23,16 +23,24 @@ Intersection::queueSize(
   const Vehicle& v
 ) const
 {
-  return m_queue[v.currentPosition].size();
+  return m_queue[v.position].size();
+}
+
+const Vehicle&
+Intersection::viewFrontVehicle(
+  const Vehicle& v
+) const
+{
+  return m_queue[v.position].front();
 }
 
 Vehicle
-Intersection::frontVehicle(
+Intersection::getFrontVehicle(
   const Vehicle& v
 )
 {
-  Vehicle frontV(m_queue[v.currentPosition].front());
-  m_queue[v.currentPosition].pop();
+  Vehicle frontV(m_queue[v.position].front());
+  m_queue[v.position].pop();
   return frontV;
 }
 
@@ -41,7 +49,7 @@ Intersection::increaseGroupSize(
   const Vehicle& v
 )
 {
-  m_groupSize[v.currentPosition] += 1;
+  m_groupSize[v.position] += 1;
 }
 
 void
@@ -49,7 +57,7 @@ Intersection::decreaseGroupSize(
   const Vehicle& v
 )
 {
-  m_groupSize[v.currentPosition] -= 1;
+  m_groupSize[v.position] -= 1;
 }
 
 unsigned
@@ -57,7 +65,7 @@ Intersection::groupSize(
   const Vehicle& v
 ) const
 {
-  return m_groupSize[v.currentPosition];
+  return m_groupSize[v.position];
 }
 
 void
@@ -83,7 +91,7 @@ Intersection::signalState(
   const Vehicle& v
 ) const
 {
-  return m_states[v.currentPosition];
+  return m_states[v.position];
 }
 
 void
@@ -91,7 +99,7 @@ Intersection::setOccupied(
   const Vehicle& v
 )
 {
-  m_occupied[v.currentPosition] = true;
+  m_occupied[v.position] = true;
 }
 
 void
@@ -99,7 +107,7 @@ Intersection::setClear(
   const Vehicle& v
 )
 {
-  m_occupied[v.currentPosition] = true;
+  m_occupied[v.position] = false;
 }
 
 bool
@@ -107,5 +115,5 @@ Intersection::isClear(
   const Vehicle& v
 )
 {
-  return !m_occupied[v.currentPosition];
+  return !m_occupied[v.position];
 }
