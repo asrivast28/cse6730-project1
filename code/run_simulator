@@ -1,0 +1,84 @@
+#!/usr/bin/python
+
+from argparse import ArgumentParser, ArgumentTypeError
+from numpy import arange
+import os
+import subprocess
+from tempfile import NamedTemporaryFile
+
+
+# run the simulator with given parameters
+def runWithParameters(allParameters, seed, debug):
+    # determine executable path
+    executableName = 'simulator'
+    if debug:
+        executableName += '_debug'
+    # should be in the same directory as this file
+    executable = os.path.join(os.path.curdir, executableName)
+    # open a temporary file
+    with NamedTemporaryFile() as paramFile:
+        # write all the parameter values to the temporary file
+        for param, value in allParameters.iteritems():
+            paramFile.write("%s %f\n"%(param, value))
+        paramFile.flush()
+        # run the executable
+        p = subprocess.Popen([executable, '--parameters', paramFile.name, '--seed', str(seed)],
+                              stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        # get output from stdout and stderr
+        result, errors = p.communicate()
+        # print out the result from stdout
+        print result,
+
+def variableRange(string):
+    try:
+        var, varRange = string.split('=')
+        start, stop, diff = (float(n) for n in varRange.split(':'))
+        return (var, start, stop, diff)
+    except:
+        raise ArgumentTypeError("'" + string + "' is not in the acceptable format.") 
+
+if __name__ == '__main__':
+    parser = ArgumentParser()
+    parser.add_argument("--seed", help = "Random seed value for running the simulation.",
+                        type = int, default = 0)
+    parser.add_argument("--ranges", help = "Specify variable ranges in the form <VAR=START:STOP:DIFF>.",
+                        type = variableRange, nargs = '*')
+    parser.add_argument("--debug", help = "Specify if debug executable is to be used.",
+                        action = 'store_true')
+    args = parser.parse_args()
+
+    # default parameters
+    defaultParameters = {
+        "SIMULATION_CUTOFF_TIME" : 1000.0,
+        "INTERSECTION_CROSS_TIME" : 1.0,
+        "NB_INTER_ARRIVAL_TIME" : 20.0,
+        "LEFT_INTER_ARRIVAL_TIME" : 20.0,
+        "ROAD_TRAVEL_TIME" : 3.0,
+        "AGGRESSIVE_DRIVER_LIKEIHOOD" : 0.2,
+        "RANDOM_JOIN_VEHICLE_TENTH" : 0.5,
+        "RANDOM_JOIN_VEHICLE_ELEVENTH" : 0.6,
+        "RANDOM_JOIN_VEHICLE_TWELFTH" : 0.7,
+        "RANDOM_JOIN_VEHICLE_THRITEENTH" : 0.8,
+        "RANDOM_JOIN_VEHICLE_FOURTEENTH" : 1,
+        "RANDOM_JOIN_VEHICLE_ARRIVAL_TIME" : 50,
+        "LEFT_TURN_PROBABILITY " : 0.15,
+        "RIGHT_TURN_PROBABILITY" : 0.3,
+        "GO_THROUGH_PROBABILITY" : 1,
+        "RIGHT_TURN_DISAPPEAR_TIME" : 5,
+        }
+    if args.ranges is not None:
+        print '\n'
+        for varRange in args.ranges: 
+            runParameters = defaultParameters.copy()
+            if varRange[0] not in runParameters:
+                print "'%s' not found in the list of defined parameters.\n"%(varRange[0])
+                continue
+            for val in arange(*varRange[1:]):
+                print "Running simulation with '%s' set to %f"%(varRange[0], val)
+                runParameters[varRange[0]] = val
+                # run the executable with modified parameters
+                runWithParameters(runParameters, args.seed, args.debug)
+            print '\n'
+    else:
+        # run the executable with default parameters
+        runWithParameters(defaultParameters, args.seed, args.debug)
