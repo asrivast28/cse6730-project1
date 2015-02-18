@@ -52,7 +52,7 @@ static
 bool
 aggressiveDriver() {
   double x = urand();
-  return std::isless(x, 0.05);
+  return std::isless(x, parameters.get("AGGRESSIVE_DRIVER_LIKEIHOOD"));
 }
 
 static
@@ -72,6 +72,47 @@ setLeftTurnCurrentPosition(Vehicle &v) {
     v.position = Street::Fourteenth;
   }
 }
+
+
+static
+void
+setRandomJoinVehicleInitialPosition(Vehicle &v) {
+  double x = urand();
+  if (std::isless(x, parameters.get("RANDOM_JOIN_VEHICLE_TENTH"))) {
+    v.position = Street::Tenth;
+  }
+  else if (std::isgreaterequal(x,parameters.get("RANDOM_JOIN_VEHICLE_TENTH") ) && std::isless(x, parameters.get("RANDOM_JOIN_VEHICLE_ELEVENTH"))) {
+    v.position = Street::Eleventh;
+  }
+  else if (std::isgreaterequal(x, parameters.get("RANDOM_JOIN_VEHICLE_ELEVENTH")) && std::isless(x, parameters.get("RANDOM_JOIN_VEHICLE_TWELFTH"))) {
+    v.position = Street::Twelfth;
+  }
+  else if (std::isgreaterequal(x, parameters.get("RANDOM_JOIN_VEHICLE_TWELFTH")) && std::isless(x, parameters.get("RANDOM_JOIN_VEHICLE_THRITEENTH"))) {
+    v.position = Street::Thirteenth;
+  }
+  
+  else {
+    v.position = Street::Fourteenth;
+  }
+}
+
+
+static
+void
+setRandomTurnDirection(Vehicle &v) {
+  double x = urand();
+  if (std::isless(x, parameters.get("LEFT_TURN_PROBABILITY"))) {
+    v.turndirection = TurnDirection::Left_turn;
+  }
+  else if (std::isgreaterequal(x,parameters.get("LEFT_TURN_PROBABILITY") ) && std::isless(x, parameters.get("RIGHT_TURN_PROBABILITY"))) {
+    v.turndirection = TurnDirection::Right_turn;
+  }
+  else if 
+  (std::isgreaterequal(x, parameters.get("RIGHT_TURN_PROBABILITY")) && std::isless(x, parameters.get("GO_THROUGH_PROBABILITY"))) {
+    v.turndirection = TurnDirection::GO_THROUGH;
+  }
+}
+
 
 
 
@@ -117,10 +158,17 @@ ArrivalEvent::process(
   arrivedV.entryTime = simulation.currentTime();
   // then add the vehicle to the queue first
   arrivedV.waitingSince = simulation.currentTime();
+  ////determine whether the vehicle is going to make the right turn or not
+  // if make the left
+ //if (m_vehicle.turndirection!=TurnDirection::Left_turn){
+  
   intersection.addToQueue(arrivedV);
 
+  const Vehicle& frontV = intersection.viewFrontVehicle(m_vehicle);
+  
   // check if it is green light and no vehicles in the opposite direction
-  if ((signal == Intersection::GREEN_THRU) && Intersection::isClear(m_vehicle)) {
+  // and the vehicle is not making the left turn 
+  if ((signal == Intersection::GREEN_THRU) && Intersection::isClear(m_vehicle) && frontV.turndirection == GO_THROUGH) {
     bool isAggressive = aggressiveDriver();
     double ts = simulation.currentTime() + parameters.get("INTERSECTION_CROSS_TIME");
     // one of the vehicles is going to cross so we can set the intersection state to occupied
@@ -138,14 +186,35 @@ ArrivalEvent::process(
     else {
       // else if there are no vehicles in the opposite directions or the driver is not aggressive
       // start the go straight direction vehicle
-      // start the opposite vehicle to accross
       Vehicle v(intersection.getFrontVehicle(m_vehicle));
       if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
         v.totalWaiting += (simulation.currentTime() - v.waitingSince);
         simulation.schedule(new CrossedEvent(ts, v));
       }
     }
-  }
+  }  
+ // if the vehicle is making the left turn, schedule its crossed event in order to 
+  // initiate its next crossed actions
+ 
+  else if (frontV.turndirection!=GO_THROUGH){
+    // schedule its crossed action so as let the action to triggle another crossed event
+       if (frontV.turndirection == Left_turn){
+       double ts = simulation.currentTime();//can go to the left turn lane immediatly;
+       Vehicle v(intersection.getFrontVehicle(m_vehicle));
+       simulation.schedule(new CrossedEvent(ts, v));
+       }
+
+        else {
+        double ts = simulation.currentTime()+randexp(parameters.get("RIGHT_TURN_DISAPPEAR_TIME"));//can go to the left turn lane immediatly;
+        Vehicle v(intersection.getFrontVehicle(m_vehicle));
+        if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
+        v.totalWaiting += (simulation.currentTime() - v.waitingSince);
+        simulation.schedule(new CrossedEvent(ts, v));
+        }
+        } 
+
+}
+
 
   if (!m_continued) {
     // if it is the begining point, could schedule a new arrival event
@@ -160,6 +229,7 @@ ArrivalEvent::process(
       newVehicle.id = uniqueId();
       newVehicle.origin = m_vehicle.position;
       newVehicle.position = m_vehicle.position;
+      setRandomTurnDirection(newVehicle);
       simulation.schedule(new ArrivalEvent(ts, newVehicle));
     }
   }
@@ -187,14 +257,14 @@ CrossedEvent::process(
   Intersection::setClear(m_vehicle);
 
   //if the vehicle are accrossing the intersection and are entering the next intersection
-  if (m_vehicle.position != m_vehicle.destination) {
+  if (m_vehicle.position != Street::Fifteenth && m_vehicle.turndirection == GO_THROUGH) {
     double ts = simulation.currentTime() + parameters.get("ROAD_TRAVEL_TIME");
     if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
       // increment the position of the current vehicle and schedule the departure event
       simulation.schedule(new DepartureEvent(ts, m_vehicle));
     }
   }
-  else { // if the vehicle are making the right turn, just schedule its departure
+  else { // if the vehicle are making the right or left turn, just schedule its departure
     Vehicle v(m_vehicle);
     v.exitTime = simulation.currentTime();
     Log() << "Vehicle with id: " << v.id << " took a right turn at time: " << v.exitTime << " Total waiting time: " << v.totalWaiting;
@@ -206,39 +276,66 @@ CrossedEvent::process(
   unsigned queueSizeLeft = intersectionLeft.queueSize(m_vehicle);
   intersection.updateSignalStates(simulation.currentTime());
   Intersection::SignalState signal = intersection.signalState(m_vehicle);
-
-  // if there are cars in the queue, and the intersection is clear
-  if (signal == Intersection::GREEN_THRU) {
-    if (queueSize > 0) {
-      bool leftAggressive = aggressiveDriver();
-      if (!leftAggressive || (queueSizeLeft == 0)) {
-        Intersection::setOccupied(m_vehicle);
-        double ts = simulation.currentTime() + randexp(parameters.get("ROAD_TRAVEL_TIME"));
-        if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
-          Vehicle v(intersection.getFrontVehicle(m_vehicle));
-          v.totalWaiting += (simulation.currentTime() - v.waitingSince);
-          simulation.schedule(new CrossedEvent(ts, v));
+    // if there are cars in the queue, and the intersection is clear
+    if (signal == Intersection::GREEN_THRU) {
+      if ((queueSize > 0) && (intersection.viewFrontVehicle(m_vehicle).turndirection == GO_THROUGH)) {
+        bool leftAggressive = aggressiveDriver();
+        if (!leftAggressive || (queueSizeLeft == 0)) {
+          Intersection::setOccupied(m_vehicle);
+          double ts = simulation.currentTime() + randexp(parameters.get("ROAD_TRAVEL_TIME"));
+          if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
+            Vehicle v(intersection.getFrontVehicle(m_vehicle));
+            v.totalWaiting += (simulation.currentTime() - v.waitingSince);
+            simulation.schedule(new CrossedEvent(ts, v));
+          }
+        }
+        else { // if the aggressive driver and queuesize is not 0, start the left turn
+          double ts = simulation.currentTime() + parameters.get("INTERSECTION_CROSS_TIME");
+          if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
+            Vehicle v(intersectionLeft.getFrontVehicle(m_vehicle));
+            v.totalWaiting += (simulation.currentTime() - v.waitingSince);
+            simulation.schedule(new CrossedEventLeft(ts, v));
+          }
         }
       }
-      else { // if the aggressive driver and queuesize is not 0, start the left turn
+      else if (queueSizeLeft != 0) { // if the queuesize is 0, and the left turn lane has vehicle, start them off
         double ts = simulation.currentTime() + parameters.get("INTERSECTION_CROSS_TIME");
-        if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
+        if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME")))  {
+          Intersection::setOccupied(m_vehicle);
           Vehicle v(intersectionLeft.getFrontVehicle(m_vehicle));
           v.totalWaiting += (simulation.currentTime() - v.waitingSince);
           simulation.schedule(new CrossedEventLeft(ts, v));
         }
       }
     }
-    else if (queueSizeLeft != 0) { // if the queuesize is 0, and the left turn lane has vehicle, start them off
-      double ts = simulation.currentTime() + parameters.get("INTERSECTION_CROSS_TIME");
-      if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME")))  {
-        Intersection::setOccupied(m_vehicle);
-        Vehicle v(intersectionLeft.getFrontVehicle(m_vehicle));
-        v.totalWaiting += (simulation.currentTime() - v.waitingSince);
-        simulation.schedule(new CrossedEventLeft(ts, v));
-      }
-    }
+    // else if the front vehicle of the go through lane is making the right or left turn, just schedule its 
+    // crossed actions to triggle the following event
+   
+    else if (queueSize > 0) {
+      const Vehicle& frontV = intersection.getFrontVehicle(m_vehicle);
+        if (frontV.turndirection!=GO_THROUGH){
+      // schedule its crossed action so as let the action to triggle another crossed event
+         if (frontV.turndirection == Left_turn){
+         double ts = simulation.currentTime();//can go to the left turn lane immediatly;
+         Vehicle v(intersection.getFrontVehicle(m_vehicle));
+         simulation.schedule(new CrossedEvent(ts, v));
+         }
+
+
+
+          else {
+          double ts = simulation.currentTime()+randexp(parameters.get("RIGHT_TURN_DISAPPEAR_TIME"));//can go to the left turn lane immediatly;
+          Vehicle v(intersection.getFrontVehicle(m_vehicle));
+          if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
+          v.totalWaiting += (simulation.currentTime() - v.waitingSince);
+          simulation.schedule(new CrossedEvent(ts, v));
+          }
+          } 
+
   }
+  }
+
+
 }
 
 
@@ -267,6 +364,7 @@ DepartureEvent::process(
     double ts = simulation.currentTime();
     // schedule an arrival event for this vehicle at the next intersection
     if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
+      setRandomTurnDirection(v);  // every time the vehicle re-enter the intersection, change its turn-direction randomly
 			simulation.schedule(new ArrivalEvent(ts, v, true));
     }
   }
@@ -275,8 +373,23 @@ DepartureEvent::process(
     Log() << "Vehicle with id: " << v.id << " exited at time: " << v.exitTime << " Total waiting time: " << v.totalWaiting;
     // Collect data from the vehicle.
     exitedVehicles.push_back(v);
+    //schedule random arrival event to simulate the vehicles that come in between the intersection
+    //including the vehicle traveling from the right turn from the east and west direction
+    //and thane vehicle that come from along the way(like from the parking lots,residential apartments etc)
+    if (!m_continued) {
+    double ts = simulation.currentTime() + randexp(parameters.get("RANDOM_JOIN_VEHICLE_ARRIVAL_TIME"));
+    // Schedule new arrival only if the computed time stamp is less than maximum.
+    if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
+      // create new arrival event with a new vehicle
+      Vehicle newVehicle;
+      newVehicle.id = uniqueId();
+      newVehicle.origin = m_vehicle.position;
+      setRandomJoinVehicleInitialPosition(newVehicle);
+      setRandomTurnDirection(newVehicle);
+      simulation.schedule(new ArrivalEvent(ts, newVehicle,true));
   }
-
+}
+}
 }
 
 
@@ -465,6 +578,7 @@ main(
   firstV.id = uniqueId();
   firstV.origin = Street::Tenth;
   firstV.position = Street::Tenth;
+  firstV.turndirection = TurnDirection::GO_THROUGH;
   simulation.schedule(new ArrivalEvent(startTime, firstV));
 
   double startTimeLeft = randexp(parameters.get("LEFT_INTER_ARRIVAL_TIME"));
