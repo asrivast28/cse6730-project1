@@ -1,12 +1,14 @@
 #include "Intersection.hpp"
 
+#include "TrafficParameters.hpp"
+
+#include <string>
 
 std::vector<bool> Intersection::m_occupied(static_cast<size_t>(Street::Fifteenth));
 
 Intersection::Intersection(
 ) : m_queue(static_cast<size_t>(Street::Fifteenth)),
-  m_groupSize(static_cast<size_t>(Street::Fifteenth)),
-  m_states(static_cast<size_t>(Street::Fifteenth))
+  m_groupSize(static_cast<size_t>(Street::Fifteenth))
 {
 }
 
@@ -15,6 +17,7 @@ Intersection::addToQueue(
   const Vehicle& v
 )
 {
+  assert(v.position >= Street::Tenth);
   m_queue[v.position].push(v);
 }
 
@@ -23,6 +26,7 @@ Intersection::queueSize(
   const Vehicle& v
 ) const
 {
+  assert(v.position >= Street::Tenth);
   return m_queue[v.position].size();
 }
 
@@ -31,6 +35,8 @@ Intersection::viewFrontVehicle(
   const Vehicle& v
 ) const
 {
+  assert(v.position >= Street::Tenth);
+  assert(m_queue[v.position].size() > 0);
   return m_queue[v.position].front();
 }
 
@@ -39,6 +45,8 @@ Intersection::getFrontVehicle(
   const Vehicle& v
 )
 {
+  assert(v.position >= Street::Tenth);
+  assert(m_queue[v.position].size() > 0);
   Vehicle frontV(m_queue[v.position].front());
   m_queue[v.position].pop();
   return frontV;
@@ -68,30 +76,46 @@ Intersection::groupSize(
   return m_groupSize[v.position];
 }
 
-void
-Intersection::updateSignalStates(
-  const double currentTime
+Intersection::SignalState
+Intersection::getSignalState(
+  const Vehicle& v,
+  const double currentTime,
+  const TrafficParameters& parameters
 )
 {
-  double segment = std::remainder(currentTime, 87.6);
+  assert(v.position >= Street::Tenth);
+  std::string intersection;
+  switch (v.position) {
+    case Street::Tenth:
+      intersection = "TENTH";
+      break;
+    case Street::Eleventh:
+      intersection = "ELEVENTH";
+      break;
+    case Street::Twelfth:
+      intersection = "TWELFTH";
+      break;
+    case Street::Thirteenth:
+      intersection = "THIRTEENTH";
+      break;
+    case Street::Fourteenth:
+      intersection = "FOURTEENTH";
+      break;
+    default:
+      throw std::runtime_error("Outside the SUI!");
+  }
+  double segment = std::remainder(currentTime, parameters.get(intersection + "_INTERSECTION_TOTAL"));
   SignalState state = RED;
-  if (std::islessequal(segment, 34.7)) {
+  if (v.position == Street::Thirteenth) {
     state = GREEN_THRU;
   }
-  else if (std::islessequal(segment, 38.3)) {
+  else if (std::islessequal(segment, parameters.get(intersection + "_INTERSECTION_GREEN"))) {
+    state = GREEN_THRU;
+  }
+  else if (std::islessequal(segment, parameters.get(intersection + "_INTERSECTION_YELLOW"))) {
     state = YELLOW;
   }
-  for (int s = Street::Tenth; s < Street::Fifteenth; ++s) {
-    m_states[s] = state;
-  }
-}
-
-Intersection::SignalState
-Intersection::signalState(
-  const Vehicle& v
-) const
-{
-  return m_states[v.position];
+  return state;
 }
 
 void
@@ -99,6 +123,7 @@ Intersection::setOccupied(
   const Vehicle& v
 )
 {
+  assert(v.position >= Street::Tenth);
   m_occupied[v.position] = true;
 }
 
@@ -107,6 +132,7 @@ Intersection::setClear(
   const Vehicle& v
 )
 {
+  assert(v.position >= Street::Tenth);
   m_occupied[v.position] = false;
 }
 
@@ -115,5 +141,6 @@ Intersection::isClear(
   const Vehicle& v
 )
 {
+  assert(v.position >= Street::Tenth);
   return !m_occupied[v.position];
 }

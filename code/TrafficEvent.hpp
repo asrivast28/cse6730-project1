@@ -8,9 +8,10 @@ typedef enum { Tenth = 10, Eleventh, Twelfth, Thirteenth, Fourteenth, Fifteenth 
 typedef enum { Left_turn, Right_turn, GO_THROUGH} TurnDirection;
 
 /**
- * @brief Structure for storing all the information for a vehicle.
+ * @brief Class for storing all the information for a vehicle.
  */
-typedef struct {
+class Vehicle {
+public:
   unsigned id; // ID of the vehicle.
   Street origin; // Originating street of the vehicle.
   Street destination; // Destination street of the vehicle.
@@ -20,7 +21,7 @@ typedef struct {
   double waitingSince; // Time at which the vehicle started waiting.
   double totalWaiting; // Total waiting time for the vehicle.
   TurnDirection turndirection;
-} Vehicle;
+};
 
 
 /**

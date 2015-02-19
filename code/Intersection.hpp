@@ -8,6 +8,8 @@
 #include <vector>
 
 
+class TrafficParameters;
+
 class Intersection {
 public:
   enum
@@ -56,15 +58,12 @@ public:
     const Vehicle&
   ) const;
 
-  void
-  updateSignalStates(
-    const double
-  );
-
   Intersection::SignalState
-  signalState(
-    const Vehicle&
-  ) const;
+  getSignalState(
+    const Vehicle&,
+    const double,
+    const TrafficParameters&
+  );
 
 public:
   static
@@ -88,7 +87,6 @@ public:
 private:
   std::vector<std::queue<Vehicle> > m_queue;
   std::vector<unsigned> m_groupSize;
-  std::vector<SignalState> m_states;
 
 private:
   static std::vector<bool> m_occupied;

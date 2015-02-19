@@ -65,6 +65,26 @@ if __name__ == '__main__':
         "RIGHT_TURN_PROBABILITY" : 0.3,
         "GO_THROUGH_PROBABILITY" : 1,
         "RIGHT_TURN_DISAPPEAR_TIME" : 5,
+
+        "TENTH_INTERSECTION_GREEN"  : 34.7,
+        "TENTH_INTERSECTION_YELLOW" : 38.3,                                       
+        "TENTH_INTERSECTION_TOTAL"  : 87.6,
+
+        "ELEVENTH_INTERSECTION_GREEN"  : 41.5,
+        "ELEVENTH_INTERSECTION_YELLOW" : 44.7,                                       
+        "ELEVENTH_INTERSECTION_TOTAL"  : 100.1,
+
+        "TWELFTH_INTERSECTION_GREEN"  : 60.9,
+        "TWELFTH_INTERSECTION_YELLOW" : 64.1,                                       
+        "TWELFTH_INTERSECTION_TOTAL"  : 99.8,
+
+        "THIRTEENTH_INTERSECTION_GREEN"  : 34.7,
+        "THIRTEENTH_INTERSECTION_YELLOW" : 38.3,                                       
+        "THIRTEENTH_INTERSECTION_TOTAL"  : 87.6,
+
+        "FOURTEENTH_INTERSECTION_GREEN"  : 34.6,
+        "FOURTEENTH_INTERSECTION_YELLOW" : 38.8,                                       
+        "FOURTEENTH_INTERSECTION_TOTAL"  : 84.9,
         }
     if args.ranges is not None:
         print '\n'
