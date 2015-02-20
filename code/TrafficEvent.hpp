@@ -8,10 +8,9 @@ typedef enum { Tenth = 10, Eleventh, Twelfth, Thirteenth, Fourteenth, Fifteenth 
 typedef enum { Left_turn, Right_turn, GO_THROUGH} TurnDirection;
 
 /**
- * @brief Class for storing all the information for a vehicle.
+ * @brief Structure for storing all the information for a vehicle.
  */
-class Vehicle {
-public:
+struct Vehicle {
   unsigned id; // ID of the vehicle.
   Street origin; // Originating street of the vehicle.
   Street destination; // Destination street of the vehicle.
@@ -128,22 +127,5 @@ public:
     Simulation&
   );
 }; // class CrossedEventLeft
-
-/**
- * @brief Class for intersection departure event.
- */
-class DepartureEventLeft : public TrafficEvent {
-public:
-  DepartureEventLeft(
-    const double,
-    const Vehicle&,
-    const bool = false
-  );
-
-  void
-  process(
-    Simulation&
-  );
-}; // class DepartureEventLeft
 
 #endif // TRAFFICEVENT_HPP_

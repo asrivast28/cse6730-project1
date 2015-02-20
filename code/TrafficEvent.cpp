@@ -52,7 +52,7 @@ static
 bool
 aggressiveDriver() {
   double x = urand();
-  return std::isless(x, parameters.get("AGGRESSIVE_DRIVER_LIKEIHOOD"));
+  return std::isless(x, parameters.get("AGGRESSIVE_DRIVER_LIKELIHOOD"));
 }
 
 static
@@ -516,22 +516,6 @@ CrossedEventLeft::process(
   }
 }
 
-
-/* -----------------------------------------  Implementation of DepartureEventLeft methods. ----------------------------------------- */
-DepartureEventLeft::DepartureEventLeft(
-  const double timestamp,
-  const Vehicle& vehicle,
-  const bool continued
-) : TrafficEvent(timestamp, vehicle, continued)
-{
-}
-
-void
-DepartureEventLeft::process(
-  Simulation& simulation
-)
-{
-}
 
 /* -----------------------------------------  Implementation of main function. ----------------------------------------- */
 /**

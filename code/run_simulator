@@ -49,18 +49,22 @@ if __name__ == '__main__':
 
     # default parameters
     defaultParameters = {
-        "SIMULATION_CUTOFF_TIME" : 1000.0,
-        "INTERSECTION_CROSS_TIME" : 1.0,
-        "NB_INTER_ARRIVAL_TIME" : 20.0,
+        "SIMULATION_CUTOFF_TIME" : 900.0,
+        "INTERSECTION_CROSS_TIME" : 7.5,
+        "ROAD_TRAVEL_TIME" : 7.5,
+
+        "NB_INTER_ARRIVAL_TIME" : 8.0,
         "LEFT_INTER_ARRIVAL_TIME" : 20.0,
-        "ROAD_TRAVEL_TIME" : 3.0,
-        "AGGRESSIVE_DRIVER_LIKEIHOOD" : 0.2,
+
+        "AGGRESSIVE_DRIVER_LIKELIHOOD" : 0.2,
+
         "RANDOM_JOIN_VEHICLE_TENTH" : 0.5,
         "RANDOM_JOIN_VEHICLE_ELEVENTH" : 0.6,
         "RANDOM_JOIN_VEHICLE_TWELFTH" : 0.7,
         "RANDOM_JOIN_VEHICLE_THRITEENTH" : 0.8,
         "RANDOM_JOIN_VEHICLE_FOURTEENTH" : 1,
         "RANDOM_JOIN_VEHICLE_ARRIVAL_TIME" : 50,
+
         "LEFT_TURN_PROBABILITY " : 0.15,
         "RIGHT_TURN_PROBABILITY" : 0.3,
         "GO_THROUGH_PROBABILITY" : 1,
