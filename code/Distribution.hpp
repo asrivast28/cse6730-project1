@@ -3,29 +3,53 @@
 
 #include <cmath>
 #include <cstdlib>
+#include <random>
 
-
-/*
- * Generate a uniform random number in the range [0,1)
+/**
+ * @brief Class for generating random number for different distributions.
  */
-double urand(void) {
-	double x;
-  do {
-    x = std::rand() / static_cast<double>(RAND_MAX);
-  } while (std::isgreaterequal(x, 1.0));		// loop until x < 1
-	return x;
-}
+class Distribution {
+public:
+  Distribution()
+    : m_engine() 
+  {
+  }
 
-/*
- * Generate a random number from an exponential distribution
- * with a given mean.
- *
- * @param mean the mean of the distribution
- *
- * @return a number draw from exponential distribution
- */
-double randexp(double mean) {
-	return (-1 * mean) * (log(1.0 - urand()));
-}
+  void
+  seed(
+    const unsigned number
+  )
+  {
+    m_engine.seed(number);
+  }
+
+  double
+  urand(
+    const double a = 0.0,
+    const double b = 1.0
+  )
+  {
+    return std::uniform_real_distribution<double>(a, b)(m_engine);
+  }
+
+  double
+  normal(
+    const double mean
+  )
+  {
+    return std::normal_distribution<double>()(m_engine);
+  }
+
+  double
+  exponential(
+    const double mean 
+  )
+  {
+    return (-1.0 * mean) * (log(1.0 - urand()));
+  }
+
+private:
+  std::default_random_engine m_engine;
+};
 
 #endif // DISTRIBUTION_HPP_

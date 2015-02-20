@@ -36,6 +36,7 @@ public:
 };
 
 
+static Distribution distribution;
 static Intersection intersection;
 static Intersection intersectionLeft;
 static TrafficParameters parameters;
@@ -51,7 +52,7 @@ uniqueId() {
 static
 bool
 aggressiveDriver() {
-  double x = urand();
+  double x = distribution.urand();
   return std::isless(x, parameters.get("AGGRESSIVE_DRIVER_LIKELIHOOD"));
 }
 
@@ -61,7 +62,7 @@ setLeftTurnCurrentPosition(
   Vehicle &v
 )
 {
-  double x = urand();
+  double x = distribution.urand();
   if (std::isless(x, 0.25)) {
     v.position = Street::Eleventh;
   }
@@ -81,7 +82,7 @@ setLeftTurnCurrentPosition(
 static
 void
 setRandomJoinVehicleInitialPosition(Vehicle &v) {
-  double x = urand();
+  double x = distribution.urand();
   if (std::isless(x, parameters.get("RANDOM_JOIN_VEHICLE_TENTH"))) {
     v.position = Street::Tenth;
   }
@@ -104,7 +105,7 @@ setRandomJoinVehicleInitialPosition(Vehicle &v) {
 static
 void
 setRandomTurnDirection(Vehicle &v) {
-  double x = urand();
+  double x = distribution.urand();
   if (std::isless(x, parameters.get("LEFT_TURN_PROBABILITY"))) {
     v.turndirection = TurnDirection::Left_turn;
   }
@@ -209,7 +210,7 @@ ArrivalEvent::process(
        }
 
         else {
-        double ts = simulation.currentTime()+randexp(parameters.get("RIGHT_TURN_DISAPPEAR_TIME"));//can go to the left turn lane immediatly;
+        double ts = simulation.currentTime()+distribution.normal(parameters.get("RIGHT_TURN_DISAPPEAR_TIME"));//can go to the left turn lane immediatly;
         Vehicle v(intersection.getFrontVehicle(m_vehicle));
         if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
         v.totalWaiting += (simulation.currentTime() - v.waitingSince);
@@ -225,7 +226,7 @@ ArrivalEvent::process(
     // Compute the time-stamp of the new arrival, and only schedule a new arrival
     // if it is less than the maximum allowed time-stamp
     // just for simplicity, assume the vehicle only coming from the beginning point
-    double ts = simulation.currentTime() + randexp(parameters.get("NB_INTER_ARRIVAL_TIME"));
+    double ts = simulation.currentTime() + distribution.exponential(parameters.get("NB_INTER_ARRIVAL_TIME"));
     // Schedule new arrival only if the computed time stamp is less than maximum.
     if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
       // create new arrival event with a new vehicle
@@ -262,7 +263,7 @@ CrossedEvent::process(
 
   //if the vehicle are accrossing the intersection and are entering the next intersection
   if (m_vehicle.position != Street::Fifteenth && m_vehicle.turndirection == GO_THROUGH) {
-    double ts = simulation.currentTime() + parameters.get("ROAD_TRAVEL_TIME");
+    double ts = simulation.currentTime() + parameters.get("SECTION_TRAVEL_TIME");
     if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
       // increment the position of the current vehicle and schedule the departure event
       simulation.schedule(new DepartureEvent(ts, m_vehicle));
@@ -285,7 +286,7 @@ CrossedEvent::process(
       bool leftAggressive = aggressiveDriver();
       if (!leftAggressive || (queueSizeLeft == 0)) {
         Intersection::setOccupied(m_vehicle);
-        double ts = simulation.currentTime() + randexp(parameters.get("ROAD_TRAVEL_TIME"));
+        double ts = simulation.currentTime() + parameters.get("SECTION_TRAVEL_TIME");
         if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
           Vehicle v(intersection.getFrontVehicle(m_vehicle));
           v.totalWaiting += (simulation.currentTime() - v.waitingSince);
@@ -317,7 +318,7 @@ CrossedEvent::process(
          simulation.schedule(new CrossedEvent(ts, v));
        }
        else {
-         double ts = simulation.currentTime()+randexp(parameters.get("RIGHT_TURN_DISAPPEAR_TIME"));//can go to the left turn lane immediatly;
+         double ts = simulation.currentTime()+distribution.normal(parameters.get("RIGHT_TURN_DISAPPEAR_TIME"));//can go to the left turn lane immediatly;
          Vehicle v(intersection.getFrontVehicle(m_vehicle));
          if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
          v.totalWaiting += (simulation.currentTime() - v.waitingSince);
@@ -370,7 +371,7 @@ DepartureEvent::process(
     //including the vehicle traveling from the right turn from the east and west direction
     //and thane vehicle that come from along the way(like from the parking lots,residential apartments etc)
     if (!m_continued) {
-    double ts = simulation.currentTime() + randexp(parameters.get("RANDOM_JOIN_VEHICLE_ARRIVAL_TIME"));
+    double ts = simulation.currentTime() + distribution.normal(parameters.get("RANDOM_JOIN_VEHICLE_ARRIVAL_TIME"));
     // Schedule new arrival only if the computed time stamp is less than maximum.
     if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
       // create new arrival event with a new vehicle
@@ -444,7 +445,7 @@ ArrivalEventLeft::process(
   }
 
   //schedule left arrival event for random intersection
-  double ts = simulation.currentTime() + randexp(parameters.get("LEFT_INTER_ARRIVAL_TIME"));
+  double ts = simulation.currentTime() + distribution.exponential(parameters.get("LEFT_INTER_ARRIVAL_TIME"));
   // Schedule new arrival only if the computed time stamp is less than maximum.
   if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
     // create new arrival event with a new vehicle
@@ -540,14 +541,14 @@ main(
     return 1;
   }
 
-  // Seed the random number generator.
-  std::srand(parameters.randomSeed());
+  // Seed the distribution generator.
+  distribution.seed(parameters.randomSeed());
 
   // create a new simulation object
   Simulation simulation;
 
   // compute timestamp of the first arrival
-  double startTime = randexp(parameters.get("NB_INTER_ARRIVAL_TIME"));
+  double startTime = distribution.exponential(parameters.get("NB_INTER_ARRIVAL_TIME"));
 
   // create the first vehicle and schedule an arrival event at the start time
   Vehicle firstV = {};
@@ -557,7 +558,7 @@ main(
   firstV.turndirection = TurnDirection::GO_THROUGH;
   simulation.schedule(new ArrivalEvent(startTime, firstV));
 
-  double startTimeLeft = randexp(parameters.get("LEFT_INTER_ARRIVAL_TIME"));
+  double startTimeLeft = distribution.exponential(parameters.get("LEFT_INTER_ARRIVAL_TIME"));
   Vehicle firstLeft = {};
   firstLeft.id = uniqueId();
   firstLeft.origin = Street::Eleventh;
@@ -570,12 +571,17 @@ main(
 
   // calculate average waiting time
   if (exitedVehicles.size() > 0) {
+    std::vector<unsigned> count(10, 0);
     double averageWaiting = 0.0;
     for (const Vehicle& v : exitedVehicles) {
+      count[static_cast<int>(v.exitTime) / 100] += 1;
       averageWaiting += v.totalWaiting;
     }
     averageWaiting /= exitedVehicles.size();
 
+    for (const int c : count) {
+      std::cout << c << std::endl; 
+    }
     std::cout << "Average waiting time for " << exitedVehicles.size() << " vehicles, that crossed the stretch, was: " << averageWaiting << std::endl;
   }
   else {
