@@ -374,7 +374,7 @@ DepartureEvent::process(
     // Schedule new arrival only if the computed time stamp is less than maximum.
     if (std::isless(ts, parameters.get("SIMULATION_CUTOFF_TIME"))) {
       // create new arrival event with a new vehicle
-      Vehicle newVehicle;
+      Vehicle newVehicle = {};
       newVehicle.id = uniqueId();
       newVehicle.origin = m_vehicle.position;
       setRandomJoinVehicleInitialPosition(newVehicle);
