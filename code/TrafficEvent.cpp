@@ -5,6 +5,7 @@
 #include "Simulation.hpp"
 #include "TrafficParameters.hpp"
 
+#include <cstdio>
 #include <iostream>
 #include <queue>
 
@@ -537,7 +538,7 @@ main(
     parameters.parse(argc, argv);
   }
   catch (po::error& pe) {
-    std::cerr << pe.what() << std::endl;
+    fprintf(stderr, "%s", pe.what());
     return 1;
   }
 
@@ -569,23 +570,17 @@ main(
   // Run the simulation.
   simulation.run();
 
-  // calculate average waiting time
+  // print out statistics for all the vehicles that exited the system
   if (exitedVehicles.size() > 0) {
     std::vector<unsigned> count(10, 0);
-    double averageWaiting = 0.0;
+    fprintf(stdout, "#ID\tOrigin\tDestination\tEntry Time\tExit Time\tWaiting Time\n");
     for (const Vehicle& v : exitedVehicles) {
       count[static_cast<int>(v.exitTime) / 100] += 1;
-      averageWaiting += v.totalWaiting;
+      fprintf(stdout, "%d\t%d\t%d\t%f\t%f\t%f\n", v.id, v.origin, v.position, v.entryTime, v.exitTime, v.totalWaiting);
     }
-    averageWaiting /= exitedVehicles.size();
-
-    for (const int c : count) {
-      std::cout << c << std::endl; 
-    }
-    std::cout << "Average waiting time for " << exitedVehicles.size() << " vehicles, that crossed the stretch, was: " << averageWaiting << std::endl;
   }
   else {
-    std::cout << "No vehicles crossed the stretch! Something went wrong." << std::endl;
+    fprintf(stderr, "No vehicles crossed the stretch! Something went wrong.");
   }
 
   return 0;
